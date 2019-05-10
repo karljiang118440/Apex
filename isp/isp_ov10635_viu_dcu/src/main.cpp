@@ -369,6 +369,10 @@ static int32_t Run(AppContext& arContext)
   for(;;)
   {
     lFrame = arContext.mpGrabber->FramePop();
+
+	cv::Mat lFrame_opencv = lFrame.mUMat.getMat(vsdk::ACCESS_READ | OAL_USAGE_CACHED);
+
+	
     if(lFrame.mUMat.empty())
     {
       printf("Failed to grab image number %u\n", arContext.mFrmCnt);
