@@ -29,11 +29,40 @@
 #include "apex.h"
 #endif
 
-#include <apexcv_pro_remap.h>
 #include <common_helpers.h>
 #include <string>
 
+//********************************************************************
+
+#ifdef INPUT_PATH_REL
+#define INPUT_ROOT __FULL_DIR__ XSTR(INPUT_PATH_REL)/data/common/
+#else
+#define INPUT_ROOT "data/common/"
+#endif
+#ifdef OUTPUT_PATH_REL
+#define OUTPUT_ROOT __FULL_DIR__ XSTR(OUTPUT_PATH_REL)/data/output/
+#else
+#define OUTPUT_ROOT "data/output/"
+#endif
+
+
+
+#include <apexcv_pro_hog.h>
+#include <gdc_pd_svm_function.h>
 #define HOG_SVM
+
+#include <opencv2/opencv.hpp>  
+#include <umat.hpp>
+//#include <APU_HISTOGRAM.hpp>
+#include "apex.h"
+#include "common_time_measure.h"
+#include <oal.h>
+#include <stdint.h>
+#include <umat.hpp>
+#include <stdio.h>
+using namespace cv;
+using namespace apexcv;
+
 
 
 /****************************************************************************
@@ -44,12 +73,91 @@ int main(int argc, char** argv)
 
 #ifdef HOG_SVM
 
+APEX_Init();
+apexcv::Hog apex_hog;
+
+
+void APEX_Hog(vsdk::UMat &Src,vsdk::UMat &Dst,vsdk::UMat &SvmModel);
+
+
+//vsdk::UMat lSceneY_8bit_umat;
+//readImageFiler("data/apps/pedestrian_detection/gdc_pd_640x480.y",lSceneY_8bit_umat);
+
+
+
+ 
+vsdk::UMat lSceneY_8bit_umat = cv::imread(INPUT_ROOT"in_grey_640x480.png", 0).getUMat(cv::ACCESS_READ); 
 
 
 
 
+vsdk::UMat lSceneRsY_8bit_umat=lSceneY_8bit_umat;
 
 
+vsdk::UMat lSceneRsY_24bit_umat = cv::imread(INPUT_ROOT"in_color_640x480.png", 1).getUMat(cv::ACCESS_READ); 
+
+#if 0
+vsdk::UMat lSceneRsY_24bit_umat=(lSceneY_8bit_umat.rows,lSceneRsY_8bit_umat,VSDK_CV_8UC3,vsdk::USAGE_DDR0);
+
+APEX_InsertChannel(lSceneRsY_8bit_umat,lSceneRsY_24bit_umat,1,ApexKernel_0);
+APEX_InsertChannel(lSceneRsY_8bit_umat,lSceneRsY_24bit_umat,2,ApexKernel_0);
+APEX_InsertChannel(lSceneRsY_8bit_umat,lSceneRsY_24bit_umat,3,ApexKernel_0);
+
+#endif
+
+
+vsdk::UMat SVMmodel_64bit_fcmat(1,gdc_pd_svm_function_bin_len,VSDK_CV_64FC1,vsdk::USAGE_DDR0);
+double *pSvmDouble=(double*)SVMmodel_64bit_fcmat.getMat(cv::ACCESS_RW|OAL_USAGE_CACHED).data;
+memcpy(pSvmDouble,gdc_pd_svm_function_bin,gdc_pd_svm_function_bin_len);
+
+
+vsdk::UMat HogScores_16bit_scmt;
+APEX_Hog(lSceneRsY_8bit_umat,HogScores_16bit_scmt,SVMmodel_64bit_fcmat);
+
+vsdk::Mat lHogScores_mat = HogScores_16bit_scmt.getMat(vsdk::ACESS_READ|OAL_USAGE_CACHED);
+const int16_t* const cpcHogScoresS16=(const int16_t*const)(((uintptr_t)lHogScores_mat.data));
+
+
+
+
+// hog detect pedestrains 
+
+uint32_t mSceneResizesHogCounters[20];
+memset(mSceneResizesHogCounters,0,sizeof(mSceneResizesHogCounters));
+
+
+//if Hog detect result is pedestrian than drawn opencv box
+ROI pedestrianRoi;
+const int hog_threshold=800;
+cv::Mat imgSrc=lSceneRsY_24bit_umat.getMat(cv::ACCESS_RW|OAL_USAGE_CACHED);
+for(int32_t y=0;y<HogScores_16bit_scmt.rows;++y){
+  for(int32_t x=0;x<HogScores_16bit_scmt.cols;++x){
+    const int16_t cScore=
+        cpcHogScoresS16[y*(HogScores_16bit_scmt.step[0]/HogScores_16bit_scmt.elemSize())+x];
+      if(cScore>hog_threshold){
+        pedestrianRoi.x=x*4;
+        pedestrianRoi.y=y*4;
+        pedestrianRoi.width=64;
+        pedestrianRoi.height=128;
+        memset(pedestrianRoi.mResolutionDetectionCounters,0,sizeof(pedestrianRoi.mResolutionDetectionCounters));
+        ++(pedestrianRoi.mResolutionDetectionCounters[0]);
+        ++mSceneResizesHogCounters[0];
+        rectangle(imgSrc,Point(pedestrianRoi.x,pedestrianRoi.y),
+        Point(pedestrianRoi.x+pedestrianRoi.width,pedestrianRoi.y+pedestrianRoi.height),
+        Scalar(0,0,255),2);
+      }
+  }
+}
+
+/********
+(1)
+*********/
+
+
+
+APEX_Hog(){
+  
+}
 
 
 
