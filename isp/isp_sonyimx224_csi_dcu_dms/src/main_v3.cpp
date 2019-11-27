@@ -1170,7 +1170,44 @@ std::vector<string> characterStingSplit(string pend_string)
 
 
 
-double eyeAspectRatio(std::vector<cv::Point>eye)
+// add mouth aspect ratio defination ,karljiang-20191127
+
+double mouth_aspect_ratio(std::vector<cv::Point>mouth)
+{
+	// EAR = ( ||p6 - p2|| + ||p5-p3|| ) / ( 2 * ||p4 - p1|| )
+	double short_axis_A_mouth = calcTwoNormIsEuclid(mouth[5], mouth[1]);  // short_axis_A --> short_axis_A_mouth
+	double short_axis_B_mouth = calcTwoNormIsEuclid(mouth[4], mouth[2]);  // short_axis_B --> short_axis_B_mouth
+	double long_axis_C_mouth = calcTwoNormIsEuclid(mouth[3], mouth[0]);   // long_axis_C --> long_axis_C_mouth
+	double calc_mouth = (short_axis_A_mouth + short_axis_B_mouth) / (2.0 * long_axis_C_mouth);  // calc_ear --> calc_mouth
+	return calc_mouth;
+}
+
+
+
+/*
+
+Part1: raw definetion by python
+
+def mouth_aspect_ratio(mouth):
+	# compute the euclidean distances between the two sets of
+	# vertical mouth landmarks (x, y)-coordinates
+	A = dist.euclidean(mouth[2], mouth[9]) # 51, 59
+	B = dist.euclidean(mouth[4], mouth[7]) # 53, 57
+
+	# compute the euclidean distance between the horizontal
+	# mouth landmark (x, y)-coordinates
+	C = dist.euclidean(mouth[0], mouth[6]) # 49, 55
+
+	# compute the mouth aspect ratio
+	mar = (A + B) / (2.0 * C)
+
+	# return the mouth aspect ratio
+	return mar
+
+
+Part2: definetion by aurthor
+
+double mouth_aspect_ratio(std::vector<cv::Point>eye)
 {
 	// EAR = ( ||p6 - p2|| + ||p5-p3|| ) / ( 2 * ||p4 - p1|| )
 	double short_axis_A = calcTwoNormIsEuclid(eye[5], eye[1]);
@@ -1181,6 +1218,11 @@ double eyeAspectRatio(std::vector<cv::Point>eye)
 }
 
 
+
+
+
+
+*/
 
 
 
