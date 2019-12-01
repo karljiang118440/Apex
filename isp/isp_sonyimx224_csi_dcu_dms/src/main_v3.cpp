@@ -55,10 +55,10 @@ using namespace std;
 
 //显示画面参数 display
 #define SCREEN_LEFT_X_AXIS  25 
-#define SCREEN_LEFT_Y_AXIS_FACE_DETECTION_TIME  430  //��Ļ����������ʱ�� y ����
-#define SCREEN_LEFT_Y_AXIS_BLINK_COUNT 400  //��Ļ���գ�۴��� y ����
-#define SCREEN_LEFT_Y_AXIS_FACE_NO  180  //û�м�⵽������ʾ
-#define SCREEN_LEFT_Y_AXIS_LONG_DIS  150  //��ʾ state
+#define SCREEN_LEFT_Y_AXIS_FACE_DETECTION_TIME  430  
+#define SCREEN_LEFT_Y_AXIS_BLINK_COUNT 400  
+#define SCREEN_LEFT_Y_AXIS_FACE_NO  180  
+#define SCREEN_LEFT_Y_AXIS_LONG_DIS  150  
 
 #define SCREEN_LEFT_Y_AXIS_FATIGUE_DIS0  220  
 #define SCREEN_LEFT_Y_AXIS_FATIGUE_DIS1  250  
@@ -104,13 +104,15 @@ int array2[4] = { 0, 1, 2, 3 };
 string doubleTwoRound(double dVal);
 double calcTwoNormIsEuclid(cv::Point p1, cv::Point p2);
 double eyeAspectRatio(std::vector<cv::Point>eye);
+
+//define mouthAspectRation(std::vector<cv::point>mouth)
+double mouthAspectRatio(std::vector<cv::Point>mouth);
+
+
 int round_double(double number);
 string getCurrentTime();
 cv::Mat scrollScreen(int fatigue, cv::Mat& temp);
 std::vector<string> characterStingSplit(string pend_string);
-
-
-//-----------------------------------------------------------------------2019.08.22----------------------------------------
 
 //***************************************************************************
 // constants
@@ -709,6 +711,18 @@ static int32_t Run(AppContext& arContext)
 				  }
 				 // circle(temp, cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()), 3, cv::Scalar(0, 0, 255), -1);
 
+
+				// extract mouth locations
+				
+				  if (i >= 42 && i <= 47)
+				  {
+
+					  circle(temp, cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()), 2, cv::Scalar(255, 0, 0), -1);
+					  rightEye.push_back(cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()));
+				  }
+
+
+
 			  }
 			  // calc eye aspect ratio
 			  double leftEyeEar = eyeAspectRatio(leftEye);
@@ -1174,7 +1188,8 @@ std::vector<string> characterStingSplit(string pend_string)
 
 double mouth_aspect_ratio(std::vector<cv::Point>mouth)
 {
-	// EAR = ( ||p6 - p2|| + ||p5-p3|| ) / ( 2 * ||p4 - p1|| )
+	// EAR = ( ||p6 - p2|| + ||p5-p3|| ) / ( 2 * ||p4 - p1|| )   
+	//define calc_mouth ,grab the indexes of the facial ladmarks for mouth
 	double short_axis_A_mouth = calcTwoNormIsEuclid(mouth[5], mouth[1]);  // short_axis_A --> short_axis_A_mouth
 	double short_axis_B_mouth = calcTwoNormIsEuclid(mouth[4], mouth[2]);  // short_axis_B --> short_axis_B_mouth
 	double long_axis_C_mouth = calcTwoNormIsEuclid(mouth[3], mouth[0]);   // long_axis_C --> long_axis_C_mouth
