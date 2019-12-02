@@ -585,7 +585,8 @@ static int32_t Run(AppContext& arContext)
 	  double calc_30s;
 	  cam_fps = (double)cv::getTickCount();
 	  calc_30s = (double)cv::getTickCount();
-	  std::vector<cv::Point>leftEye, rightEye;	
+	  std::vector<cv::Point>leftEye, rightEye;
+	  std::vector<cv::Point>mouth;	
 	  // Grab a frame  
 	  cv::Mat face_one_gray;
 
@@ -712,14 +713,17 @@ static int32_t Run(AppContext& arContext)
 				 // circle(temp, cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()), 3, cv::Scalar(0, 0, 255), -1);
 
 
+
+
+
 				// extract mouth locations
-				
-				  if (i >= 42 && i <= 47)
+				  if (i >= 49 && i <= 59 && i%2==1)
 				  {
 
 					  circle(temp, cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()), 2, cv::Scalar(255, 0, 0), -1);
-					  rightEye.push_back(cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()));
+					  mouth.push_back(cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()));
 				  }
+				 // circle(temp, cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()), 3, cv::Scalar(0, 0, 255), -1);
 
 
 
@@ -730,6 +734,21 @@ static int32_t Run(AppContext& arContext)
 
 			  // average the eye aspect ratio together for both eyes
 			  double calcLeftRightEyeEar = (leftEyeEar + rightEyeEar) / 2.0;
+
+
+
+			  // calc mouth aspect ratio
+			  double leftEyeEar = eyeAspectRatio(leftEye);
+			  double rightEyeEar = eyeAspectRatio(rightEye);
+
+			  // average the eye aspect ratio together for both eyes
+			  double calcLeftRightEyeEar = (leftEyeEar + rightEyeEar) / 2.0;
+
+
+
+
+
+
 
 			 FILE *file_in = fopen("leftEyeEar.txt", "a");
 			  fprintf(file_in, "leftEyeEar: %.2f, rightEyeEar: %.2f, ratio: %.2f\n", leftEyeEar, rightEyeEar, calcLeftRightEyeEar);
