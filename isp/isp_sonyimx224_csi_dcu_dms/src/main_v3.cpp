@@ -53,6 +53,8 @@ using namespace std;
 #define PERCLOS_THRESH 0.4  
 #define BLINK_FREQ_MINUTE 9 
 
+#define MOUTH_AR_THRESH 0.6
+
 //显示画面参数 display
 #define SCREEN_LEFT_X_AXIS  25 
 #define SCREEN_LEFT_Y_AXIS_FACE_DETECTION_TIME  430  
@@ -511,13 +513,13 @@ static int32_t Run(AppContext& arContext)
 
   int ear_count = 0;
   int total_eye_blink = 0;
-  int count_frame = 0;  // ����֡��ȷ����30s ��֡�� = 30 * 30 �������� 1s = 30fps ��
-  double perclos; //p80
-  double blinkFreq; //գ��Ƶ��
-  double clac_sum_time = 0.0; //������ʱ���Ƿ�ﵽ 30s
+  int count_frame = 0;  
+  double perclos; 
+  double blinkFreq; 
+  double clac_sum_time = 0.0; 
   int t30s = 0;
   int unitTimeEyeCloseFrame_n = 0;
-  int fatigue = 0; //ƣ�ͼ���
+  int fatigue = 0; 
   int ear_close_state = 0;
   int gCount=0;
   int criticalValue = 0;
@@ -706,7 +708,7 @@ static int32_t Run(AppContext& arContext)
 				  }
 				  if (i >= 42 && i <= 47)
 				  {
-
+					
 					  circle(temp, cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()), 2, cv::Scalar(255, 0, 0), -1);
 					  rightEye.push_back(cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()));
 				  }
@@ -719,7 +721,7 @@ static int32_t Run(AppContext& arContext)
 				// extract mouth locations
 				  if (i >= 49 && i <= 59 && i%2==1)
 				  {
-
+					//49 51 53 55 57 59 顺序
 					  circle(temp, cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()), 2, cv::Scalar(255, 0, 0), -1);
 					  mouth.push_back(cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()));
 				  }
@@ -738,13 +740,14 @@ static int32_t Run(AppContext& arContext)
 
 
 			  // calc mouth aspect ratio
-			  double leftEyeEar = eyeAspectRatio(leftEye);
-			  double rightEyeEar = eyeAspectRatio(rightEye);
-
-			  // average the eye aspect ratio together for both eyes
-			  double calcLeftRightEyeEar = (leftEyeEar + rightEyeEar) / 2.0;
+			  double mouthMar = mouth_aspect_ratio(mouth);
 
 
+
+            // Draw text if mouth is open
+			if(mouthMar > MOUTH_AR_THRESH) 
+			cv2.putText(frame, "Mouth is Open!", (30,60),cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255),2)
+			cv::putText(temp, "Mouth is Open!", cv::Point(50, 460), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 
 
 
@@ -980,13 +983,6 @@ static int32_t SigintSetup()
 
 
 
-
-
-//---------------------------------------2019.08.22-----------------------------------------------
-
-
-
-
 double eyeAspectRatio(std::vector<cv::Point>eye)
 {
 	// EAR = ( ||p6 - p2|| + ||p5-p3|| ) / ( 2 * ||p4 - p1|| )
@@ -996,6 +992,9 @@ double eyeAspectRatio(std::vector<cv::Point>eye)
 	double calc_ear = (short_axis_A + short_axis_B) / (2.0 * long_axis_C);
 	return calc_ear;
 }
+
+
+
 
 
 double calcTwoNormIsEuclid(cv::Point p1, cv::Point p2)
@@ -1204,6 +1203,9 @@ std::vector<string> characterStingSplit(string pend_string)
 
 
 // add mouth aspect ratio defination ,karljiang-20191127
+//49 51 53 55 57 59 顺序
+//0  1  2   3 4  5
+//确认顺序无误
 
 double mouth_aspect_ratio(std::vector<cv::Point>mouth)
 {
