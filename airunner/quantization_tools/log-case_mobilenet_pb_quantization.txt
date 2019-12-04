@@ -1,0 +1,39 @@
+root@s32v234evb:~/karl# ./case_mobilenet_pb_quantization.elf
+Framebuffer mapped at 0x7fba644000.
+Too few or too many arguments
+usage: ./case_mobilenet_pb_quantization.elf(1/2/3/4/5/6/7/8/9)
+1: mobilenet classification loop demo
+2: mnetv1_ssd object detection loop demo.
+3: mnetv2_ssd object detection loop demo.
+4: mnetv2_ssdlite object detection loop demo.
+5: mobilenet classification single image demo.
+6: mnetv1_ssd object detection single image demo.
+7: mnetv2_ssd object detection single image demo.
+8: mnetv2_ssdlite object detection single image demo.
+9: Exit the program.
+
+Enter test index. 5
+Running MobileNet graph for APEX
+Classifying: data/airunner/test_classification.jpg
+Time taken to Inference times detect pictures:: 104306917 nanoseconds
+Top 5:
+                vase, 0.074565
+            umbrella, 0.044530
+          guinea pig, 0.044000
+                hook, 0.034759
+                desk, 0.027354
+
+Framebuffer mapped at 0x7fb808a000.
+Running MobileNet graph for CPU
+Classifying: data/airunner/test_classification.jpg
+Time taken to Inference times detect pictures:: 38643857158 nanoseconds
+Top 5:
+                vase, 0.074565
+            umbrella, 0.044530
+          guinea pig, 0.044000
+                hook, 0.034759
+                desk, 0.027354
+
+Framebuffer mapped at 0x7fb97f6000.
+MobileNet Test APEX/CPU fixed point match Successful
+mobilenet classification single image demo Finished successfully.
