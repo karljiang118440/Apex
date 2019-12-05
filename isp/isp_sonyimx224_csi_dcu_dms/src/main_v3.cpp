@@ -79,7 +79,7 @@ using namespace std;
 
 // start check sleep status . karl:20191205 
 
-#define StartCheck Flase;
+#define StartCheck 0
 
 
 
@@ -117,6 +117,7 @@ double eyeAspectRatio(std::vector<cv::Point>eye);
 
 //define mouthAspectRation(std::vector<cv::point>mouth)
 double mouthAspectRatio(std::vector<cv::Point>mouth);
+double mouth_aspect_ratio(std::vector<cv::Point>eye);
 
 
 int round_double(double number);
@@ -754,10 +755,11 @@ static int32_t Run(AppContext& arContext)
 
             // Draw text if mouth is open
 			if(mouthMar > MOUTH_AR_THRESH) 
-			cv::putText(temp, "Mouth is Open!", cv::Point(100, 560), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+			cv::putText(temp, "Mouth is Open!", cv::Point(200, 560), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 
 
 
+/*
 
 		if (StartCheck)
 		{
@@ -779,6 +781,10 @@ static int32_t Run(AppContext& arContext)
 
 
 		}
+
+
+*/
+
 
 
 
