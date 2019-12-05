@@ -75,6 +75,14 @@ using namespace std;
 
 #define scaleTony 4
 
+
+
+// start check sleep status . karl:20191205 
+
+#define StartCheck Flase;
+
+
+
 string iniState = "STATE: ";
 string iniDriverState = "No Face Detected !";
 string deteDriverState = "Face Detected !";
@@ -751,6 +759,35 @@ static int32_t Run(AppContext& arContext)
 
 
 
+		if (StartCheck)
+		{
+
+
+            #如果眼睛长宽比大于之前检测到的阈值，则计数，闭眼次数超过50次则认为已经"睡着"
+
+            if eyeRatioVal > eyesRatioLimit:
+
+                eyesCloseCount += 1
+
+                if eyesCloseCount >= 25:
+
+                    cv2.putText(frame, "SLEEP!!!", (10, 200),cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+
+            else:  
+
+                eyesCloseCount = 0
+
+
+		}
+
+
+
+
+
+
+
+
+
 
 			 FILE *file_in = fopen("leftEyeEar.txt", "a");
 			  fprintf(file_in, "leftEyeEar: %.2f, rightEyeEar: %.2f, ratio: %.2f\n", leftEyeEar, rightEyeEar, calcLeftRightEyeEar);
@@ -761,6 +798,13 @@ static int32_t Run(AppContext& arContext)
 				  ear_count += 1;
 				  printf("close = %d \n", ear_count);
 				  ear_close_state += 1;  
+
+
+
+				  // The threshold of ear_close_state :50 frames, 2s
+				  if(ear_close_state >=50)
+				  cv::putText(temp, "SLEEP!!!", cv::Point(100, 460), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+
 			  }
 			  else
 			  {
