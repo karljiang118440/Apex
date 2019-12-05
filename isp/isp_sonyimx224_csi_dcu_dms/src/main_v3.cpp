@@ -766,12 +766,10 @@ static int32_t Run(AppContext& arContext)
 				  ear_count += 1;
 				  printf("close = %d \n", ear_count);
 				  ear_close_state += 1;  
-
-
-
 				  // The threshold of ear_close_state :50 frames, 2s
 				  if(ear_close_state >=40)
 				  cv::putText(temp, "SLEEP!!!", cv::Point(600, 200), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+				  ear_close_state=0;
 
 			  }
 			  else
