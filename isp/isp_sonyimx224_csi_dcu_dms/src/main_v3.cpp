@@ -53,7 +53,7 @@ using namespace std;
 #define PERCLOS_THRESH 0.4  
 #define BLINK_FREQ_MINUTE 9 
 
-#define MOUTH_AR_THRESH 0.6
+#define MOUTH_AR_THRESH 0.5
 
 //显示画面参数 display
 #define SCREEN_LEFT_X_AXIS  25 
@@ -751,11 +751,10 @@ static int32_t Run(AppContext& arContext)
 			  // calc mouth aspect ratio
 			  double mouthMar = mouth_aspect_ratio(mouth);
 
-
-
             // Draw text if mouth is open
-			if(mouthMar > MOUTH_AR_THRESH) 
-			cv::putText(temp, "Mouth is Open!", cv::Point(200, 560), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+			if(mouthMar > 0.8) 
+			cv::putText(temp, "Mouth is Open!", cv::Point(120, 560), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+			cv::putText(temp, "mouthMar: " + to_string(mouthMar), cv::Point(120, 660), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 
 
 
