@@ -547,9 +547,6 @@ static int32_t Run(AppContext& arContext)
 
 
 
-
-
-
   for(;;)
   {
     lFrame = arContext.mpGrabber->FramePop();
@@ -747,49 +744,15 @@ static int32_t Run(AppContext& arContext)
 			  double calcLeftRightEyeEar = (leftEyeEar + rightEyeEar) / 2.0;
 
 
-
 			  // calc mouth aspect ratio
 			  double mouthMar = mouth_aspect_ratio(mouth);
 
+            cv::putText(temp, "TEST", cv::Point(30, 80), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+
             // Draw text if mouth is open
-			if(mouthMar > 0.8) 
-			cv::putText(temp, "Mouth is Open!", cv::Point(120, 560), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
-			cv::putText(temp, "mouthMar: " + to_string(mouthMar), cv::Point(120, 660), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
-
-
-
-/*
-
-		if (StartCheck)
-		{
-
-
-            #如果眼睛长宽比大于之前检测到的阈值，则计数，闭眼次数超过50次则认为已经"睡着"
-
-            if eyeRatioVal > eyesRatioLimit:
-
-                eyesCloseCount += 1
-
-                if eyesCloseCount >= 25:
-
-                    cv2.putText(frame, "SLEEP!!!", (10, 200),cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
-
-            else:  
-
-                eyesCloseCount = 0
-
-
-		}
-
-
-*/
-
-
-
-
-
-
-
+			if(mouthMar > 0.75) 
+			cv::putText(temp, "Mouth is Open!", cv::Point(600, 120), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+			cv::putText(temp, "mouthMar: " + to_string(mouthMar), cv::Point(600, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 
 
 
@@ -807,8 +770,8 @@ static int32_t Run(AppContext& arContext)
 
 
 				  // The threshold of ear_close_state :50 frames, 2s
-				  if(ear_close_state >=50)
-				  cv::putText(temp, "SLEEP!!!", cv::Point(100, 460), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+				  if(ear_close_state >=40)
+				  cv::putText(temp, "SLEEP!!!", cv::Point(600, 200), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 
 			  }
 			  else
@@ -1400,3 +1363,29 @@ double mouth_aspect_ratio(std::vector<cv::Point>eye)
  // --------------------------2018.8.27 by Tony ----------------------------------end----------------------------------------------
 
 
+
+/*
+
+		if (StartCheck)
+		{
+
+
+            #如果眼睛长宽比大于之前检测到的阈值，则计数，闭眼次数超过50次则认为已经"睡着"
+
+            if eyeRatioVal > eyesRatioLimit:
+
+                eyesCloseCount += 1
+
+                if eyesCloseCount >= 25:
+
+                    cv2.putText(frame, "SLEEP!!!", (10, 200),cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+
+            else:  
+
+                eyesCloseCount = 0
+
+
+		}
+
+
+*/
