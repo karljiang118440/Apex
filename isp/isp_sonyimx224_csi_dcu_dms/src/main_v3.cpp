@@ -747,7 +747,6 @@ static int32_t Run(AppContext& arContext)
 			  // calc mouth aspect ratio
 			  double mouthMar = mouth_aspect_ratio(mouth);
 
-            cv::putText(temp, "TEST", cv::Point(30, 80), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 
             // Draw text if mouth is open
 			if(mouthMar > 0.75) 
@@ -767,9 +766,9 @@ static int32_t Run(AppContext& arContext)
 				  printf("close = %d \n", ear_count);
 				  ear_close_state += 1;  
 				  // The threshold of ear_close_state :50 frames, 2s
-				  if(ear_close_state >=40)
+				  if(ear_close_state >=20)
 				  cv::putText(temp, "SLEEP!!!", cv::Point(600, 200), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
-				  ear_close_state=0;
+				//  ear_close_state=0;
 
 			  }
 			  else
