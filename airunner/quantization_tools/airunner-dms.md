@@ -1,6 +1,5 @@
 export DATA_DIR=/home/karljiang/SW32V23-VSDK-AIRUNNER-CODE_DROP-1.2.0-2/SW32V23-VSDK-AIRUNNER-CODE_DROP-1.2.0-2/s32v234_sdk/libs/dnn/airunner/offline/quantization_tools/data
-export MODEL_DIR=/home/karljiang/SW32V23-VSDK-AIRUNNER-CODE_DROP-1.2.0-2/SW32V23-VSDK-AIRUNNER-CODE_DROP-1.2.0-2/s32v234_sdk/libs/dnn/airunner/offline/quantization_tools/MODEL
-
+export MODEL_DIR=/home/karljiang/SW32V23-VSDK-AIRUNNER-CODE_DROP-1.2.0-2/SW32V23-VSDK-AIRUNNER-CODE_DROP-1.2.0-2/s32v234_sdk/libs/dnn/airunner/offline/quantization_tools/model
 
 
 ###对 mobilenet 进行的量化压缩
@@ -16,7 +15,24 @@ bazel run --config=opt //tensorflow/contrib/lite/toco:toco -- \
  --input_shape=1,224,224,3 --input_array=input --output_array=MobilenetV1/Predictions/Reshape_1
 
 
+log:
 
+karljiang@ubuntu:~/TensorFlow/tensorflow-1.9.0-rc1$ bazel run --config=opt //tensorflow/contrib/lite/toco:toco -- \
+>  --drop_control_depenency \
+>  --input_file=$MODEL_DIR/frozen_mobilenetV1-bms.pb \
+>  --output_file=$MODEL_DIR/frozen_mobilenetV1-bms_bn.pb \
+>  --input_format=TENSORFLOW_GRAPHDEF --output_format=TENSORFLOW_GRAPHDEF \
+>  --input_shape=1,224,224,3 --input_array=input --output_array=MobilenetV1/Predictions/Reshape_1
+WARNING: /home/karljiang/.cache/bazel/_bazel_karljiang/0d110fdbf0eb54b3c9c03f1775709aa8/external/protobuf_archive/WORKSPACE:1: Workspace name in /home/karljiang/.cache/bazel/_bazel_karljiang/0d110fdbf0eb54b3c9c03f1775709aa8/external/protobuf_archive/WORKSPACE (@com_google_protobuf) does not match the name given in the repository's definition (@protobuf_archive); this will cause a build error in future versions
+INFO: Analysed target //tensorflow/contrib/lite/toco:toco (0 packages loaded).
+INFO: Found 1 target...
+Target //tensorflow/contrib/lite/toco:toco up-to-date:
+  bazel-bin/tensorflow/contrib/lite/toco/toco
+INFO: Elapsed time: 0.460s, Critical Path: 0.02s
+INFO: Build completed successfully, 1 total action
+
+INFO: Running command line: bazel-bin/tensorflow/contrib/lite/toco/toco --drop_control_depenency '--input_file=/home/karljiang/SW32V23-VSDK-AIRUNNER-CODE_DROP-1.2.0-2/SW32V23-VSDK-AIRUNNER-CODE_DROP-1.2.0-2/s32v234_sdk/libs/dnn/airunner/offline/quantization_tools/model/frozen_mobilenetV1-bms.pb' '--output_file=/home/karljiang/SW32V23-VSDK-AIRUNNER-CODE_DROP-1.2.0-2/SW32V23-VSDK-AIRUNNER-CODE_DROP-1.2.0-2/s32v234_sdk/libs/dnn/airunner/offline/quantization_tools/model/frozen_mobilenetV1-bms_bn.pb' '--input_format=TENSORFLOW_GRAPHDEF' '--output_format=TENSORFLOW_GRAPHDEF' '--input_shape=1,224,224,3' '--input_array=input' '--output_array=MobilenetV1/Predictions/Reshape_1'
+2019-12-12 15:21:53.043449: F tensorflow/contrib/lite/toco/tooling_util.cc:807] Check failed: model.HasArray(output_array) Output array not found: MobilenetV1/Predictions/Reshape_1
 
 
 
