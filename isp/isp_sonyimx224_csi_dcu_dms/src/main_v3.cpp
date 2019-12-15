@@ -750,7 +750,7 @@ static int32_t Run(AppContext& arContext)
 
             // Draw text if mouth is open
 			if(mouthMar > 0.75) 
-			cv::putText(temp, "Mouth is Open!", cv::Point(600, 120), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+			cv::putText(temp, "Mouth is Open!", cv::Point(600, 120), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
 			cv::putText(temp, "mouthMar: " + to_string(mouthMar), cv::Point(600, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 
 
