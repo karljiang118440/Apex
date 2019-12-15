@@ -7,8 +7,11 @@ Version3：需要增加清研的标准，检测闭眼时间时长为2s，发出�
 
 version4:更改状态颜色
 
+#1.更改警报颜色
 cv::color(0,0,255) 为红色，
 （255,0,0） 为绿色
+
+#2、sleep 状态的判断怎么样才能判断人眼闭眼时间
 
 
 ****************************************************************************/
@@ -765,18 +768,27 @@ static int32_t Run(AppContext& arContext)
 			 FILE *file_in = fopen("leftEyeEar.txt", "a");
 			  fprintf(file_in, "leftEyeEar: %.2f, rightEyeEar: %.2f, ratio: %.2f\n", leftEyeEar, rightEyeEar, calcLeftRightEyeEar);
 			  fclose(file_in);
+
+
                          
 			  if (calcLeftRightEyeEar < EYE_AR_THRESH) 
 			  {
 				  ear_count += 1;
 				  printf("close = %d \n", ear_count);
-				  ear_close_state += 1;  
+
+				  ear_close_state += 1; 
+				  printf("ear_close_state = %d \n", ear_close_state); 
 				  // The threshold of ear_close_state :50 frames, 2s
-				  if(ear_close_state >=20)
+				  if(ear_close_state >=50)
+				  {
 				  cv::putText(temp, "SLEEP!!!", cv::Point(1000, 200), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 				//  ear_close_state=0;
+				  }
 
 			  }
+
+
+
 			  else
 			  {
 				  if (ear_count >= EYE_AR_CONSEC_FRAMES)
