@@ -5,6 +5,12 @@ Version3：需要增加清研的标准，检测闭眼时间时长为2s，发出�
 		  添加打哈欠检测选项，检测打哈欠现象  karljiang-20191127
 
 
+version4:更改状态颜色
+
+cv::color(0,0,255) 为红色，
+（255,0,0） 为绿色
+
+
 ****************************************************************************/
 
 
@@ -610,8 +616,8 @@ static int32_t Run(AppContext& arContext)
 	  std::vector<dlib::full_object_detection> shapes;
 
 	  string titleDms = "DMS On NXP S32V234";
-	  cv::putText(temp, titleDms, cv::Point(temp.cols / 2 - titleDms.size() / 2 * 20, 50), CV_FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(0, 0, 255), 2);
-	  cv::putText(temp, iniState, cv::Point(SCREEN_LEFT_X_AXIS, SCREEN_LEFT_Y_AXIS_LONG_DIS), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+	  cv::putText(temp, titleDms, cv::Point(temp.cols / 2 - titleDms.size() / 2 * 20, 50), CV_FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(255, 0, 0), 2);
+	  cv::putText(temp, iniState, cv::Point(SCREEN_LEFT_X_AXIS, SCREEN_LEFT_Y_AXIS_LONG_DIS), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
 
 	  //------add wpi logo------
 	  cv::Mat imageROI = temp(cv::Rect(temp.cols - logo.cols, temp.rows - logo.rows, logo.cols, logo.rows)); 
@@ -645,10 +651,10 @@ static int32_t Run(AppContext& arContext)
 	  // if no detected face, dont't display time; 
 	  if (face_rect.size() != 0)
 	  {
-		  cv::putText(temp, ds, cv::Point(SCREEN_LEFT_X_AXIS, SCREEN_LEFT_Y_AXIS_FACE_DETECTION_TIME), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+		  cv::putText(temp, ds, cv::Point(SCREEN_LEFT_X_AXIS, SCREEN_LEFT_Y_AXIS_FACE_DETECTION_TIME), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
 	  
             
-		  cv::putText(temp, deteDriverState, cv::Point(SCREEN_LEFT_X_AXIS, SCREEN_LEFT_Y_AXIS_FACE_NO), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+		  cv::putText(temp, deteDriverState, cv::Point(SCREEN_LEFT_X_AXIS, SCREEN_LEFT_Y_AXIS_FACE_NO), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
 
 	  }
 
@@ -698,7 +704,7 @@ static int32_t Run(AppContext& arContext)
 	  {
 		  for (unsigned int j = 0; j < shapes.size(); j++)
 		  {
-			  //cv::putText(temp, deteDriverState, cv::Point(SCREEN_LEFT_X_AXIS, SCREEN_LEFT_Y_AXIS_FACE_NO), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+			  //cv::putText(temp, deteDriverState, cv::Point(SCREEN_LEFT_X_AXIS, SCREEN_LEFT_Y_AXIS_FACE_NO), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
                           if(j == std::distance(std::begin(areaRect), biggest))
 			  {
 			  for (unsigned int i = 0; i < 68; i++)
@@ -718,7 +724,7 @@ static int32_t Run(AppContext& arContext)
 					  circle(temp, cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()), 2, cv::Scalar(255, 0, 0), -1);
 					  rightEye.push_back(cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()));
 				  }
-				 // circle(temp, cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()), 3, cv::Scalar(0, 0, 255), -1);
+				 // circle(temp, cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()), 3, cv::Scalar(255, 0, 0), -1);
 
 
 
@@ -731,7 +737,7 @@ static int32_t Run(AppContext& arContext)
 					  circle(temp, cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()), 2, cv::Scalar(255, 0, 0), -1);
 					  mouth.push_back(cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()));
 				  }
-				 // circle(temp, cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()), 3, cv::Scalar(0, 0, 255), -1);
+				 // circle(temp, cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()), 3, cv::Scalar(255, 0, 0), -1);
 
 
 
@@ -750,8 +756,8 @@ static int32_t Run(AppContext& arContext)
 
             // Draw text if mouth is open
 			if(mouthMar > 0.75) 
-			cv::putText(temp, "Mouth is Open!", cv::Point(600, 120), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
-			cv::putText(temp, "mouthMar: " + to_string(mouthMar), cv::Point(600, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+			cv::putText(temp, "Mouth is Open!", cv::Point(600, 120), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+			cv::putText(temp, "mouthMar: " + to_string(mouthMar), cv::Point(600, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
 
 
 
@@ -779,11 +785,11 @@ static int32_t Run(AppContext& arContext)
 				  printf("dtected = %d \n", total_eye_blink);
 
 			  }
-			  cv::putText(temp, "Blinks: " + to_string(total_eye_blink), cv::Point(SCREEN_LEFT_X_AXIS, SCREEN_LEFT_Y_AXIS_BLINK_COUNT), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
-			  cv::putText(temp, "EAR: " + to_string(calcLeftRightEyeEar), cv::Point(25, 460), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+			  cv::putText(temp, "Blinks: " + to_string(total_eye_blink), cv::Point(SCREEN_LEFT_X_AXIS, SCREEN_LEFT_Y_AXIS_BLINK_COUNT), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
+			  cv::putText(temp, "EAR: " + to_string(calcLeftRightEyeEar), cv::Point(25, 460), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
 			  }
 		  }
-		  //	cv::putText(temp, "Currently in a state of fatigue : ", cv::Point(25, 50), CV_FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
+		  //	cv::putText(temp, "Currently in a state of fatigue : ", cv::Point(25, 50), CV_FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 0), 2);
 		  cam_fps = (double)cv::getTickCount() - cam_fps;
 		//  printf("one frame time : %g \n", (cam_fps * 1000 / cv::getTickFrequency()));
 		 // FILE *file_in_fps = fopen("fps.txt", "a");
@@ -821,9 +827,9 @@ static int32_t Run(AppContext& arContext)
 			  blinkFreq = total_eye_blink / (calc_one_frame_time_s * count_frame);
 			  if (perclos > PERCLOS_THRESH)
 			  {
-				  //cv::putText(temp, "Perclos: " + doubleTwoRound(perclos) + "; Currently in a state of fatigue !", cv::Point(25, 33), CV_FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
+				  //cv::putText(temp, "Perclos: " + doubleTwoRound(perclos) + "; Currently in a state of fatigue !", cv::Point(25, 33), CV_FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 0), 2);
 				  fatigue++;
-				  //cv::putText(temp, to_string(fatigue), cv::Point(25, 450), CV_FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
+				  //cv::putText(temp, to_string(fatigue), cv::Point(25, 450), CV_FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 0), 2);
 
 			  }
 
@@ -831,9 +837,9 @@ static int32_t Run(AppContext& arContext)
 			  {
 				  if (blinkFreq < (BLINK_FREQ_MINUTE / 60))
 				  {
-					  //cv::putText(temp, "BlinkFreq: " + doubleTwoRound(blinkFreq) + "; Currently in a state of fatigue !", cv::Point(25, 41), CV_FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
+					  //cv::putText(temp, "BlinkFreq: " + doubleTwoRound(blinkFreq) + "; Currently in a state of fatigue !", cv::Point(25, 41), CV_FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 0), 2);
 					  fatigue++;
-					  //cv::putText(temp, to_string(fatigue), cv::Point(25, 450), CV_FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
+					  //cv::putText(temp, to_string(fatigue), cv::Point(25, 450), CV_FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 0), 2);
 				  }
 			  }
 
@@ -861,7 +867,7 @@ static int32_t Run(AppContext& arContext)
 	  }
 	  else 
 	  {
-		  cv::putText(temp, iniDriverState, cv::Point(SCREEN_LEFT_X_AXIS, SCREEN_LEFT_Y_AXIS_FACE_NO), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+		  cv::putText(temp, iniDriverState, cv::Point(SCREEN_LEFT_X_AXIS, SCREEN_LEFT_Y_AXIS_FACE_NO), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
 	  }
 
 
@@ -1054,7 +1060,8 @@ cv::Mat scrollScreen(int fatigue, cv::Mat& temp)
 				fa.push_back(fatigue_path);
 				flag_one = false;
 			}
-			cv::putText(temp, fa[0], point_arr[0], CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 255, 0), 2);
+			//cv::putText(temp, fa[0], point_arr[0], CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 255, 0), 2);
+			cv::putText(temp, fa[0], point_arr[0], CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 		}
 
 		else if (fatigue == 2)
@@ -1076,7 +1083,8 @@ cv::Mat scrollScreen(int fatigue, cv::Mat& temp)
 				}
 				else
 				{
-					cv::putText(temp, fa[i], point_arr[i], CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 255, 0), 2);
+					//cv::putText(temp, fa[i], point_arr[i], CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 255, 0), 2);
+					cv::putText(temp, fa[i], point_arr[i], CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 				}
 			}
 		}
@@ -1097,7 +1105,8 @@ cv::Mat scrollScreen(int fatigue, cv::Mat& temp)
 				}
 				else
 				{
-					cv::putText(temp, fa[i], point_arr[i], CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 255, 0), 2);
+					//cv::putText(temp, fa[i], point_arr[i], CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 255, 0), 2);
+					cv::putText(temp, fa[i], point_arr[i], CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 				}
 			}
 		}
@@ -1117,7 +1126,8 @@ cv::Mat scrollScreen(int fatigue, cv::Mat& temp)
 				}
 				else
 				{
-					cv::putText(temp, fa[i], point_arr[i], CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 255, 0), 2);
+					//cv::putText(temp, fa[i], point_arr[i], CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 255, 0), 2);
+					cv::putText(temp, fa[i], point_arr[i], CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 				}
 			}
 		}
@@ -1181,7 +1191,9 @@ cv::Mat scrollScreen(int fatigue, cv::Mat& temp)
 			}
 			else
 			{
-				cv::putText(temp, chara_string_spli[i], cv::Point(point_arr[0].x, point_arr[0].y + i * SCREEN_LINE_SEG), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 255, 0), 2);
+				//cv::putText(temp, chara_string_spli[i], cv::Point(point_arr[0].x, point_arr[0].y + i * SCREEN_LINE_SEG), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 255, 0), 2);
+				cv::putText(temp, chara_string_spli[i], cv::Point(point_arr[0].x, point_arr[0].y + i * SCREEN_LINE_SEG), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+
 			}
 		}
 
@@ -1299,7 +1311,7 @@ double mouth_aspect_ratio(std::vector<cv::Point>eye)
 
 
 
-	  //	cv::putText(temp, to_string(fatigue), cv::Point(400, 50), CV_FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
+	  //	cv::putText(temp, to_string(fatigue), cv::Point(400, 50), CV_FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 0), 2);
 	//  imshow("Results_multiview_reinforce", temp);
 	  //cv::waitKey(0);
  
@@ -1336,7 +1348,7 @@ double mouth_aspect_ratio(std::vector<cv::Point>eye)
 		       //}
 		       for (unsigned int i = 0; i < face_rect.size(); i++)
 		       {
-			       //cv::rectangle(temp, cv::Point(face_rect[i].x, face_rect[i].y), cv::Point(face_rect[i].x + face_rect[i].width, face_rect[i].y + face_rect[i].height), cv::Scalar(0, 0, 255), 2);
+			       //cv::rectangle(temp, cv::Point(face_rect[i].x, face_rect[i].y), cv::Point(face_rect[i].x + face_rect[i].width, face_rect[i].y + face_rect[i].height), cv::Scalar(255, 0, 0), 2);
 			       dlib::rectangle r((long)face_rect[i].x*4, (long)face_rect[i].y*4, (long)(face_rect[i].x*4 + face_rect[i].width*4), (long)(face_rect[i].y*4 + face_rect[i].height*4));
 
 			       // Find the pose of each face.
@@ -1350,7 +1362,7 @@ double mouth_aspect_ratio(std::vector<cv::Point>eye)
 				       {
 					       for (unsigned int i = 0; i < 68; i++) 
 					       {
-						       circle(temp, cvPoint(shapes[j].part(i).x(), shapes[j].part(i).y()), 3, cv::Scalar(0, 0, 255), -1);
+						       circle(temp, cvPoint(shapes[j].part(i).x(), shapes[j].part(i).y()), 3, cv::Scalar(255, 0, 0), -1);
 						       //cv::putText(temp, to_string(i), cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()), CV_FONT_HERSHEY_PLAIN, 1, cv::Scalar(255, 0, 0));
 						       //cout << "the " << i << " point��" << cv::Point(shapes[j].part(i).x(), shapes[j].part(i).y()) << endl;
 					       }
@@ -1375,7 +1387,7 @@ double mouth_aspect_ratio(std::vector<cv::Point>eye)
 
                 if eyesCloseCount >= 25:
 
-                    cv2.putText(frame, "SLEEP!!!", (10, 200),cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                    cv2.putText(frame, "SLEEP!!!", (10, 200),cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
 
             else:  
 
