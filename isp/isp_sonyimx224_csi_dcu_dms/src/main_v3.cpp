@@ -756,8 +756,8 @@ static int32_t Run(AppContext& arContext)
 
             // Draw text if mouth is open
 			if(mouthMar > 0.75) 
-			cv::putText(temp, "Mouth is Open!", cv::Point(600, 120), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
-			cv::putText(temp, "mouthMar: " + to_string(mouthMar), cv::Point(600, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
+			cv::putText(temp, "Mouth is Open!", cv::Point(1000, 120), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+			cv::putText(temp, "mouthMar: " + to_string(mouthMar), cv::Point(1000, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
 
 
 
@@ -773,7 +773,7 @@ static int32_t Run(AppContext& arContext)
 				  ear_close_state += 1;  
 				  // The threshold of ear_close_state :50 frames, 2s
 				  if(ear_close_state >=20)
-				  cv::putText(temp, "SLEEP!!!", cv::Point(600, 200), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+				  cv::putText(temp, "SLEEP!!!", cv::Point(1000, 200), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 				//  ear_close_state=0;
 
 			  }
