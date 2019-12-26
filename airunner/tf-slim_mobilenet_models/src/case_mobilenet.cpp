@@ -43,8 +43,8 @@ inline static void stopwatch(bool start, std::string verb = "")
   {
     auto endTime = Clock::now();
     std::cout << "Time taken to " << verb << ": "
-              << std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count()
-              << " microseconds" << std::endl;
+              << std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count()
+              << " milliseconds" << std::endl;
   }
 }
 
