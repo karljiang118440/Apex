@@ -175,15 +175,15 @@ output.PutFrame(lFrameOutput);
 	  status = case_mobilenet("data/airunner/frozen_mobilenet_v1_bn_qsym_final_part.pb",
                               "data/airunner/frozen_mobilenet_v1_bn_float_outputlayers_graph.pb",
                               "data/airunner/test_classification.jpg",
-                              "data/airunner/image_classification/flowers_slim_labels.txt");
+                              "data/airunner/image_classification/imagenet_slim_labels.txt");  //imagenet_slim_labels <--  flowers_slim_labels
       break;
     case 6:
       status =
-          //case_mssd("data/airunner/frozen_mssd_afterbnfold_iden_part_quant_in.pb",
-		  //case_mssd("data/airunner/frozen_mssd_afterbnfold_iden_quantized_by_jie.pb", //load net errors
-		  case_mssd("data/airunner/frozen_mssd.pb",  //使用原始的模型，
-		  //case_mssd("data/airunner/frozen_mssd_part_karl_1.pb",  //tensorflow quantization tools commend
-                    "data/airunner/test_object_detection.jpg", "data/airunner/object_detection/mscoco_labels.txt");
+              //case_mssd("data/airunner/frozen_mssd_afterbnfold_iden_part_quant_in.pb",
+		          //case_mssd("data/airunner/frozen_mssd_afterbnfold_iden_quantized_by_jie.pb", //load net errors
+		          case_mssd("data/airunner/frozen_mssd.pb",  //使用原始的模型，
+		          //case_mssd("data/airunner/frozen_mssd_part_karl_1.pb",  //tensorflow quantization tools commend
+                        "data/airunner/test_object_detection.jpg", "data/airunner/object_detection/mscoco_labels.txt");
       break;
     case 7:
       status =
