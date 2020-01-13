@@ -161,20 +161,47 @@ output.PutFrame(lFrameOutput);
                               "data/airunner/test_classification.jpg",
                               "data/airunner/image_classification/imagenet_slim_labels.txt");
       break;
+
+
+
+#if 0   // ssd_mb1_pet_part_bn_quant_final.pb 模型
     case 6:
       status =
-          case_mssd("data/airunner/ssd_mb1_pet_part_bn_quant.pb",  ssd_mb1_pet_part_bn_quant  <-- frozen_mssd_afterbnfold_iden_part_quant_in
+          case_mssd("data/airunner/ssd_mb1_pet_part_bn_quant_final.pb",  //ssd_mb1_pet_part_bn_quant  <-- frozen_mssd_afterbnfold_iden_part_quant_in
+                    "data/airunner/test_object_detection.jpg", "data/airunner/object_detection/pet_labels.txt");  // mscoco_labels --> pet_labels
+      break;
+
+#endif
+
+
+#if 1   // ssd_mb1_pet_part_bn_quant.pb 模型
+    case 6:
+      status =
+          case_mssd("data/airunner/ssd_mb1_pet_part_bn_quant.pb",
                     "data/airunner/test_object_detection.jpg", "data/airunner/object_detection/mscoco_labels.txt");
       break;
 
+#endif 
+
 # if 0  // raw case 6
-    case 6:
+    case 6:`
       status =
           case_mssd("data/airunner/frozen_mssd_afterbnfold_iden_part_quant_in.pb",
                     "data/airunner/test_object_detection.jpg", "data/airunner/object_detection/mscoco_labels.txt");
       break;
 
 #endif 
+
+# if 0  // frozen_mssd.pb --> frozen_mssd_part_bn_quant_final.pb
+    case 6:
+      status =
+          case_mssd("data/airunner/frozen_mssd_part_bn_quant_final.pb",
+                    "data/airunner/test_object_detection.jpg", "data/airunner/object_detection/mscoco_labels.txt");
+      break;
+
+#endif 
+
+
 
 
 
