@@ -164,13 +164,12 @@ output.PutFrame(lFrameOutput);
 
 
 
-#if 1   // ssd_mb1_pet_part_bn_quant_final.pb 模型
+#if 1   // frozen_mssd_v2_part_bn_quant_final.pb 模型
     case 6:
       status =
-          case_mssd("data/airunner/ssd_mb1_pet_part_bn_quant_final.pb",  //ssd_mb1_pet_part_bn_quant  <-- frozen_mssd_afterbnfold_iden_part_quant_in
-                    "data/airunner/object_detection/dog.jpg", "data/airunner/object_detection/pet_label.txt");  // mscoco_labels --> pet_labels
+          case_mssd("data/airunner/frozen_mssd_v2_part_bn_quant_final.pb",  //ssd_mb1_pet_part_bn_quant  <-- frozen_mssd_afterbnfold_iden_part_quant_in
+                    "data/airunner/object_detection/cat.jpg", "data/airunner/object_detection/mscoco_labels.txt");  // mscoco_labels --> pet_labels
       break;
-
 #endif
 
 
@@ -178,7 +177,7 @@ output.PutFrame(lFrameOutput);
     case 6:
       status =
           case_mssd("data/airunner/ssd_mb1_pet_part_bn_quant.pb",
-                    "data/airunner/test_object_detection.jpg", "data/airunner/object_detection/mscoco_labels.txt");
+                    "data/airunner/object_detection/dog.jpg", "data/airunner/object_detection/pet_label.txt");
       break;
 
 #endif 
