@@ -206,8 +206,18 @@ output.PutFrame(lFrameOutput);
 
     case 7:
       status =
+
+      #if 0 // row model
           case_mssd("data/airunner/mnet2ssd_inference_graph_part_bn_quant_final.pb",
                     "data/airunner/test_object_detection.jpg", "data/airunner/object_detection/mscoco_labels.txt", 91, 2);
+      #endif
+
+      #if 1  // frozen_ssd_mb2_quantized_part_bn_quant_final.pb
+          case_mssd("data/airunner/frozen_ssd_mb2_quantized_part_bn_quant_final.pb",
+                    "data/airunner/test_object_detection.jpg", "data/airunner/object_detection/mscoco_labels.txt", 91, 2);
+      #endif
+
+
       break;
 	  
     case 8:
