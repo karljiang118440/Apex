@@ -43,14 +43,7 @@ python mnet_minmax_freeze.py \
 --out_graph=$MODEL_DIR/mobilenet_v2_1.0_224_frozen_bn_qsym_final.pb \
 --out_graph_part=$MODEL_DIR/mobilenet_v2_1.0_224_frozen_bn_qsym_final_part.pb \
 --output_layer=MobilenetV2/Predictions/Reshape_1 \
---output_layer_part=MobilenetV2/MobilenetV2/Conv2d_13_pointwise/Relu6
-
-
-
-
-
-
-
+--output_layer_part=MobilenetV2/Conv_1/Relu6
 
 
 
