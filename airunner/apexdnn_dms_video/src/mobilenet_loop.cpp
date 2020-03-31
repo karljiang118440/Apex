@@ -24,19 +24,12 @@
 
 
 #include "test_cases.hpp"
-#include <airunner_postprocessing_ssd.hpp>
-#include "test_cases.hpp"
-#include<read_image.hpp>
-#include <opencv2/opencv.hpp>  
-#include "common_time_measure.h"
-#include <oal.h>
-#include <stdint.h>
-#include <iostream>
-#include <fstream>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/objdetect/objdetect.hpp>
+
+
+
+
+#define video_airunner 1
+
 
 
 
@@ -99,62 +92,21 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
 
   lApexNetInput->SetQuantParams({QuantInfo(-1, 0)});
   lApexNetInput->Allocate(Allocation_t::OAL);
+
+
+
+  Tensor* lApexNetInput1  = net_mobile->AddTensor(std::unique_ptr<Tensor>(Tensor::Create<>(
+                        "NET_INPUT_TENSOR", DataType_t::SIGNED_8BIT,
+                        TensorShape<TensorFormat_t::NHWC>{1, 224, 224,3},
+                        TensorLayout<TensorFormat_t::NHWC>())));
+
+  lApexNetInput1->SetQuantParams({QuantInfo(-1, 0)});
+  lApexNetInput1->Allocate(Allocation_t::OAL);
+
+
+
+
   
-
-
-
-// karl.jiang-20200119***********
-  // add opencv parameters
-
-   cv::Mat outputImage;
-
-	 cv::VideoCapture capture; /* open video */
-	 capture.open("./data/driver.avi");
-	 
-	   if(!capture.isOpened()) // if not success, exit program
-	   {
-		 printf("Cannot open the video file: \n");
-		//return -1;
-	   } // if video open failed
-	 
-	 outputImage = cv::Mat::zeros(cv::Size(1280, 720), CV_8UC3);
-
-
-		while(true)
-		{	
-	  
- 
-		   capture >> outputImage;		
-			if (!capture.read(outputImage))
-			  {
-			  printf("\nread video frame failed!\n"); /* capture opencv frame */
-			  continue;
-			  }
-	  
-	  
-			if(!outputImage.data)
-			{
-			  std::cout << "Mobilenet: could not open or find image" << std::endl;
-			  return {};
-			}
-    }
-// outputImage --> lApexNetInput
-
-			stopwatch(true);
-			resizeBilinearAndNormalize(outputImage, lApexNetInput, true, {128}, 1.0f);
-			stopwatch(false, "resizeBilinearAndNormalize");
-	  
-
-//************* karl.jiang-20200119
-
-
-
-
-
-
-
-
-
   // Integer output of the aMnetGraph except the last 3 layers. 
   std::vector<Tensor*> fixedOutput;
   
@@ -235,9 +187,36 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
 
   std::unique_ptr<float[]> s_result(new float[1001]);
   float* result = s_result.get();
+
+
+
+
+
+#ifdef video_airunner 
+   cv::VideoCapture capture; /* open video */
+	 capture.open("./data/common/mvi_0050.avi");
+   
+	 if(!capture.isOpened()) // if not success, exit program
+	 {
+	   printf("Cannot open the video file: \n");
+	  //return -1;
+	 } // if video open failed
+   
+   //outputImage = cv::Mat::zeros(cv::Size(1280, 720), CV_8UC3);
+   cv::Mat outputImage;
+
+
+#endif
+
+
+
+
   
   while(true)
   {
+
+  #if 0
+
     std::ifstream infile(aDescriptionFile);
 
     while(infile >> imagePath)
@@ -249,8 +228,36 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
         std::cout << "Failed to read: " << imagePath << std::endl;
         return -1;
       }
+ 
       lApexNetInput->Flush();
       fixedOutput[0]->Invalidate();
+
+#endif
+
+    while(true)
+    {
+
+
+#ifdef video_airunner
+	  
+	  if (!capture.read(outputImage))
+	  	{
+	  	printf("\nread video frame failed!\n"); /* capture opencv frame */
+		capture.set(1,0);
+		continue;
+	  	}
+#endif
+
+
+
+      resizeBilinearAndNormalize(outputImage, lApexNetInput1, true, {128}, 1.0f);
+
+
+      lApexNetInput1->Flush();
+      fixedOutput[0]->Invalidate();
+
+
+
 
       // Run image through parsed model
       
@@ -296,7 +303,8 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
       std::cout << std::right << std::setw(20) << classLabels[results[4].first] << ", " << std::to_string(results[4].second) << std::endl;
       std::cout << std::endl;
 #ifndef _WINDOWS
-      DisplayImage(lFrameOutput, imagePath, classLabels, results); 
+      //DisplayImage(lFrameOutput, imagePath, classLabels, results);
+      DisplayImageOD(lFrameOutput, outputImage, classLabels, results); 
       sleep(1);
 #endif
     }
