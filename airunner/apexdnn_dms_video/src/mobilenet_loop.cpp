@@ -26,11 +26,11 @@
 #include "test_cases.hpp"
 
 
-
+#include <time.h>
 
 #define video_airunner 1
 
-
+using Clock = std::chrono::high_resolution_clock;
 
 
 using namespace airunner;
@@ -46,8 +46,8 @@ static void stopwatch(bool start, std::string verb = "")
   else{
     auto endTime = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to " << verb << ": " 
-      << std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count() 
-      << " nanoseconds" 
+      << std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count() 
+      << " milliseconds" 
       << std::endl;
   }
 }
@@ -92,17 +92,6 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
 
   lApexNetInput->SetQuantParams({QuantInfo(-1, 0)});
   lApexNetInput->Allocate(Allocation_t::OAL);
-
-
-
-  Tensor* lApexNetInput1  = net_mobile->AddTensor(std::unique_ptr<Tensor>(Tensor::Create<>(
-                        "NET_INPUT_TENSOR", DataType_t::SIGNED_8BIT,
-                        TensorShape<TensorFormat_t::NHWC>{1, 224, 224,3},
-                        TensorLayout<TensorFormat_t::NHWC>())));
-
-  lApexNetInput1->SetQuantParams({QuantInfo(-1, 0)});
-  lApexNetInput1->Allocate(Allocation_t::OAL);
-
 
 
 
@@ -194,7 +183,7 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
 
 #ifdef video_airunner 
    cv::VideoCapture capture; /* open video */
-	 capture.open("./data/common/mvi_0050.avi");
+	 capture.open("./data/common/driver.avi");
    
 	 if(!capture.isOpened()) // if not success, exit program
 	 {
@@ -202,16 +191,13 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
 	  //return -1;
 	 } // if video open failed
    
-   //outputImage = cv::Mat::zeros(cv::Size(1280, 720), CV_8UC3);
-   cv::Mat outputImage;
+   cv::Mat outputImage = cv::Mat::zeros(cv::Size(1280, 720), CV_8UC3);
+   //cv::Mat outputImage;
 
 
 #endif
 
-
-
-
-  
+ 
   while(true)
   {
 
@@ -237,6 +223,7 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
     while(true)
     {
 
+    double Time = (double)cvGetTickCount();
 
 #ifdef video_airunner
 	  
@@ -248,12 +235,16 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
 	  	}
 #endif
 
+      stopwatch(true);
+
+      resizeBilinearAndNormalize(outputImage, lApexNetInput, true, {128}, 1.0f);
+
+      stopwatch(false, "Resize+BN:");
+
+      
 
 
-      resizeBilinearAndNormalize(outputImage, lApexNetInput1, true, {128}, 1.0f);
-
-
-      lApexNetInput1->Flush();
+      lApexNetInput->Flush();
       fixedOutput[0]->Invalidate();
 
 
@@ -292,6 +283,7 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
 
       softmax(Output[0], result);
 
+      stopwatch(true);
       // Get top 5 result
       auto results = processResults(result, numClasses);
 
@@ -302,11 +294,24 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
       std::cout << std::right << std::setw(20) << classLabels[results[3].first] << ", " << std::to_string(results[3].second) << std::endl;
       std::cout << std::right << std::setw(20) << classLabels[results[4].first] << ", " << std::to_string(results[4].second) << std::endl;
       std::cout << std::endl;
+
+      stopwatch(false, "processResults():"); 
+
 #ifndef _WINDOWS
       //DisplayImage(lFrameOutput, imagePath, classLabels, results);
+
+      stopwatch(true);
       DisplayImageOD(lFrameOutput, outputImage, classLabels, results); 
-      sleep(1);
+      //sleep(1);
+      stopwatch(false, "DisplayImageOD():");
+
+         
 #endif
+
+    Time = (double)cvGetTickCount() - Time ;
+    printf( "run time = %gms\n", Time /(cvGetTickFrequency()*1000) );//毫秒
+         
+
     }
   }
 
