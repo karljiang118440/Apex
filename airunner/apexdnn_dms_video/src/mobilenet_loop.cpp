@@ -195,35 +195,24 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
    //cv::Mat outputImage;
 
 
-#endif
+  int Frame_interval = 30;
+  int frame_count = 0;
 
- 
-  while(true)
-  {
 
-  #if 0
-
-    std::ifstream infile(aDescriptionFile);
-
-    while(infile >> imagePath)
-    {
-      std::cout << "Classifying: " << imagePath << std::endl;
-
-      if (-1 == ReadImageToTensor(imagePath, lApexNetInput, nullptr, 128, 128, 0))
-      {
-        std::cout << "Failed to read: " << imagePath << std::endl;
-        return -1;
-      }
- 
-      lApexNetInput->Flush();
-      fixedOutput[0]->Invalidate();
 
 #endif
 
+ 
+ // while(true)
+  //{
+    
     while(true)
     {
 
     double Time = (double)cvGetTickCount();
+
+    if(frame_count % 30 == 0){
+
 
 #ifdef video_airunner
 	  
@@ -240,10 +229,7 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
       resizeBilinearAndNormalize(outputImage, lApexNetInput, true, {128}, 1.0f);
 
       stopwatch(false, "Resize+BN:");
-
-      
-
-
+     
       lApexNetInput->Flush();
       fixedOutput[0]->Invalidate();
 
@@ -283,7 +269,7 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
 
       softmax(Output[0], result);
 
-      stopwatch(true);
+      
       // Get top 5 result
       auto results = processResults(result, numClasses);
 
@@ -295,7 +281,7 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
       std::cout << std::right << std::setw(20) << classLabels[results[4].first] << ", " << std::to_string(results[4].second) << std::endl;
       std::cout << std::endl;
 
-      stopwatch(false, "processResults():"); 
+      
 
 #ifndef _WINDOWS
       //DisplayImage(lFrameOutput, imagePath, classLabels, results);
@@ -309,11 +295,22 @@ int mobilenet_loop(const std::string& aMnetGraph, const std::string& aResultGrap
 #endif
 
     Time = (double)cvGetTickCount() - Time ;
-    printf( "run time = %gms\n", Time /(cvGetTickFrequency()*1000) );//毫秒
-         
+    
+printf( "run time = %gms\n", Time /(cvGetTickFrequency()*1000) );
+
+
+printf( "frame_count1 = %d \n", frame_count );
+  
+frame_count = 0;
 
     }
-  }
+
+frame_count ++ ; 
+
+printf( "frame_count2 = %d \n", frame_count );
+
+    }
+ // }
 
   return 0;
 }
