@@ -1,8 +1,13 @@
 /*****************************************************************************
 
+version7:对工程代码结构优化
+#7.1、参数重复定义问题
+#7.2、抽取固定 frames -- 2020.05.06
 
 
 Version6: 添加 classfication ,用来检测相关的 demo
+
+version5:保存打哈欠时刻人，闭眼时刻人的状态并截图显示 -- 2019.12.23
 
 
 
@@ -19,7 +24,7 @@ cv::color(0,0,255) 为红色，
 #2、sleep 状态的判断怎么样才能判断人眼闭眼时间
 
 
-version5:保存打哈欠时刻人，闭眼时刻人的状态并截图显示 -- 2019.12.23
+
 
 
 
@@ -104,6 +109,58 @@ using namespace std;
 /*airunner 检测*/
 #include"test_cases.hpp"
 #include "apex.h"
+
+
+
+/*version7: 参数直接在 main.cpp 中定义*/
+#define  Param true
+
+
+
+
+#if Param
+
+#include <time.h>
+using Clock = std::chrono::high_resolution_clock;
+
+using namespace airunner;
+
+inline
+static void stopwatch(bool start, std::string verb = "")
+{
+  static auto startTime = std::chrono::high_resolution_clock::now();
+
+  if(start){
+    startTime = std::chrono::high_resolution_clock::now();
+  }
+  else{
+    auto endTime = std::chrono::high_resolution_clock::now();
+    std::cout << "Time taken to " << verb << ": " 
+      << std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count() 
+      << " milliseconds" 
+      << std::endl;
+  }
+}
+
+
+template<typename T> inline std::vector<std::pair<int, float>> processResults(T* aResults, int aNumResults)
+{
+  // Convert results to key-pair list
+  std::vector<std::pair<int, float>> resultPairs;
+  
+  for(int i = 0; i < aNumResults; i++) {
+    std::pair<int, T> pair(i, (float)(aResults[i]));
+    resultPairs.push_back(pair);
+  }
+  std::sort(resultPairs.begin(), resultPairs.end(), [](std::pair<int, T> left, std::pair<int, T> right) {
+    return left.second > right.second;
+  });
+
+  return resultPairs;
+}
+
+#endif
+
 
 
 
@@ -562,16 +619,154 @@ static int32_t Run(AppContext& arContext)
   //-----------------------------------------------2019.8.22---------------------end---------------------
 
 /*classfication*/
- std::cout << "mark3" << std::endl;
+ std::cout << "mark" << std::endl;
+
+
+
 
 
 APEX_Init();
 
- std::cout << "mark4" << std::endl;
 
 
 
- std::cout << "mark5" << std::endl;
+/*Version7:增加parameters definition*/
+
+#if Param 
+const std::string& aMnetGraph = "data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb";
+const std::string& aResultGraph = "data/airunner/frozen_mb1_dms_float_outputlayers_graph.pb";
+const std::string& aSlimLabelsFile = "data/airunner/image_classification/labels.txt";
+
+
+
+  Status_t status;
+
+  // Creating a new workspace  
+  TargetInfo lRefInfo = TargetInfo();
+  ApexTargetInfo lApexInfo = ApexTargetInfo();
+  auto lWorkspace = std::unique_ptr<Workspace>(new Workspace(std::map<std::string, TargetInfo*>{
+      {target::REF, &lRefInfo}, {target::APEX, &lApexInfo}}));
+
+  // Create and populate the Graphs
+  auto net_mobile = std::unique_ptr<Graph>(new Graph (lWorkspace.get())); 
+  auto netFixedToFloat = std::unique_ptr<Graph>(new Graph (lWorkspace.get()));
+
+  Tensor* lApexNetInput  = net_mobile->AddTensor(std::unique_ptr<Tensor>(Tensor::Create<>(
+                        "NET_INPUT_TENSOR", DataType_t::SIGNED_8BIT,
+                        TensorShape<TensorFormat_t::NHWC>{1, 224, 224,3},
+                        TensorLayout<TensorFormat_t::NHWC>())));
+
+  lApexNetInput->SetQuantParams({QuantInfo(-1, 0)});
+  lApexNetInput->Allocate(Allocation_t::OAL);
+
+
+
+  
+  // Integer output of the aMnetGraph except the last 3 layers. 
+  std::vector<Tensor*> fixedOutput;
+  
+  status = LoadNetFromTensorFlow(*net_mobile, aMnetGraph, lApexNetInput, fixedOutput);
+  if(Status_t::SUCCESS != status || fixedOutput.empty()){
+    std::cout << "Failed to load net" << std::endl;
+    return -1;
+  }
+
+#ifndef _WINDOWS
+  status = net_mobile->SetTargetHint(target::APEX);
+#else
+  status = net_mobile->SetTargetHint(target::REF);
+#endif
+
+  if(Status_t::SUCCESS != status){
+    std::cout << "Set APEX target failed" << std::endl;
+    return -1;
+  }
+  
+  status = net_mobile->Prepare(); 
+
+ std::cout << "mark1" << std::endl;
+
+  if (Status_t::SUCCESS != status){
+    std::cout << "APEX net verification failed" << std::endl;
+    return -1;
+  }
+
+
+std::cout << "mark2" << std::endl;
+
+  int dimN = fixedOutput[0]->Dim(3);
+  int dimH = fixedOutput[0]->Dim(2);
+  int dimW = fixedOutput[0]->Dim(1);
+  int dimC = fixedOutput[0]->Dim(0);
+  
+  Tensor* floatInterm  = netFixedToFloat->AddTensor(std::unique_ptr<Tensor>(Tensor::Create<>(
+                        "FLOAT_INTERM_TENSOR", DataType_t::FLOAT,
+                        TensorShape<TensorFormat_t::NHWC>{dimN, dimH,dimW, dimC},
+                        TensorLayout<TensorFormat_t::NHWC>())));
+  
+  floatInterm->Allocate(Allocation_t::HEAP);
+
+
+ std::cout << "mark3" << std::endl;
+
+  // Final Output.
+  std::vector<Tensor*> Output;
+  status = LoadNetFromTensorFlow(*netFixedToFloat, aResultGraph, floatInterm, Output);
+  if(Status_t::SUCCESS != status || Output.empty()){
+    std::cout << "Failed to load net" << std::endl;
+    return -1;
+  }
+
+std::cout << "mark1" << std::endl;
+
+  status = netFixedToFloat->SetTargetHint(target::REF);
+  if(Status_t::SUCCESS != status){
+    std::cout << "Set APEX target failed" << std::endl;
+    return -1;
+  }
+std::cout << "mark4" << std::endl;
+
+  status = netFixedToFloat->Prepare(); 
+  if (Status_t::SUCCESS != status){
+    std::cout << "APEX net verification failed" << std::endl;
+    return -1;
+  }
+
+  // Load class labels
+  std::ifstream labelfile(aSlimLabelsFile);
+  std::vector<std::string> classLabels;
+  std::string line;
+  
+  while(std::getline(labelfile, line)){
+      line.pop_back();
+      classLabels.push_back(line);
+  }
+
+
+  
+  struct Normalize norm = { 128, 128 };
+
+
+
+
+#ifndef _WINDOWS
+  io_FrameOutput_t lFrameOutput;
+  lFrameOutput.Init(DISPLAY_SCENE_WIDTH, DISPLAY_SCENE_HEIGHT, io::IO_DATA_DEPTH_08, io::IO_DATA_CH3);
+
+
+#endif
+
+
+
+  std::unique_ptr<float[]> s_result(new float[1001]);
+  float* result = s_result.get();
+
+
+#endif
+
+
+
+
 
 
 
@@ -594,7 +789,7 @@ APEX_Init();
 
 
 
-#if 1
+#if 0
 mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
                       "data/airunner/frozen_mb1_dms_float_outputlayers_graph.pb",
                       camera_mat,
@@ -603,10 +798,63 @@ mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
 #endif
 
 
+/*version7: parameters definition*/
 
+#if Param
+
+     resizeBilinearAndNormalize(camera_mat, lApexNetInput, true, {128}, 1.0f);
+	 lApexNetInput->Flush();
+     fixedOutput[0]->Invalidate();
+
+
+
+      // Run image through parsed model
+      
+      status = net_mobile->Run();
+      if(status != Status_t::SUCCESS)
+      {
+        std::cout << "Net execution failed" << std::endl;
+         
+        return -1;
+      }
+
+      status = floatInterm->CopyDataFrom(*fixedOutput[0]);
+      if(status != Status_t::SUCCESS)
+      {
+        std::cout << "Copy failed" << std::endl;
+         
+        return -1;
+      }
+      
+      status = netFixedToFloat->Run();
+      if(status != Status_t::SUCCESS)
+      {
+        std::cout << "Fixed to float net execution failed" << std::endl;
+         
+        return -1;
+      }
+
+      int numClasses =  Output[0]-> Dim(0) *
+                        Output[0]-> Dim(1) *
+                        Output[0]-> Dim(2) * 
+                        Output[0]-> Dim(3);
+
+      softmax(Output[0], result);
+
+      
+      // Get top 5 result
+      auto results = processResults(result, numClasses);
+
+      std::cout << "Top 5: " << std::endl;
+      std::cout << std::right << std::setw(20) << classLabels[results[0].first] << ", " << std::to_string(results[0].second) << std::endl;
+      std::cout << std::right << std::setw(20) << classLabels[results[1].first] << ", " << std::to_string(results[1].second) << std::endl;
+      std::cout << std::right << std::setw(20) << classLabels[results[2].first] << ", " << std::to_string(results[2].second) << std::endl;
+      std::cout << std::right << std::setw(20) << classLabels[results[3].first] << ", " << std::to_string(results[3].second) << std::endl;
+      std::cout << std::right << std::setw(20) << classLabels[results[4].first] << ", " << std::to_string(results[4].second) << std::endl;
+      std::cout << std::endl;
                              
 
-
+#endif
 
 
 //*********
