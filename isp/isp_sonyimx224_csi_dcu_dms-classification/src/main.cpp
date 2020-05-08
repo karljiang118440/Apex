@@ -1,8 +1,14 @@
 /*****************************************************************************
 
+Version8:
+
+
 version7:对工程代码结构优化
-#7.1、参数重复定义问题
+#7.1、参数重复定义问题 (Y)
 #7.2、抽取固定 frames -- 2020.05.06
+#7.3、屏幕显示检测结果
+	## classify 分类结果
+#7.4、fixed display bug:重复定义显示尺寸大小 -- 2020.05.08
 
 
 Version6: 添加 classfication ,用来检测相关的 demo
@@ -748,7 +754,7 @@ std::cout << "mark4" << std::endl;
 
 
 
-
+/*
 #ifndef _WINDOWS
   io_FrameOutput_t lFrameOutput;
   lFrameOutput.Init(DISPLAY_SCENE_WIDTH, DISPLAY_SCENE_HEIGHT, io::IO_DATA_DEPTH_08, io::IO_DATA_CH3);
@@ -756,7 +762,7 @@ std::cout << "mark4" << std::endl;
 
 #endif
 
-
+*/
 
   std::unique_ptr<float[]> s_result(new float[1001]);
   float* result = s_result.get();
@@ -785,16 +791,13 @@ std::cout << "mark4" << std::endl;
 
 /*添加 classfication */
 
-	  cv::Mat camera_mat = lFrame.mUMat.getMat(vsdk::ACCESS_RW | OAL_USAGE_CACHED);
-
-
+cv::Mat camera_mat = lFrame.mUMat.getMat(vsdk::ACCESS_RW | OAL_USAGE_CACHED);
 
 #if 0
 mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
                       "data/airunner/frozen_mb1_dms_float_outputlayers_graph.pb",
                       camera_mat,
                       "data/airunner/image_classification/labels.txt");
-
 #endif
 
 
@@ -846,13 +849,45 @@ mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
       auto results = processResults(result, numClasses);
 
       std::cout << "Top 5: " << std::endl;
-      std::cout << std::right << std::setw(20) << classLabels[results[0].first] << ", " << std::to_string(results[0].second) << std::endl;
-      std::cout << std::right << std::setw(20) << classLabels[results[1].first] << ", " << std::to_string(results[1].second) << std::endl;
-      std::cout << std::right << std::setw(20) << classLabels[results[2].first] << ", " << std::to_string(results[2].second) << std::endl;
-      std::cout << std::right << std::setw(20) << classLabels[results[3].first] << ", " << std::to_string(results[3].second) << std::endl;
-      std::cout << std::right << std::setw(20) << classLabels[results[4].first] << ", " << std::to_string(results[4].second) << std::endl;
+      std::cout << std::right << std::setw(20) << classLabels[results[0].first] << "  , " << std::to_string(results[0].second) << std::endl;
+      std::cout << std::right << std::setw(20) << classLabels[results[1].first] << "  , " << std::to_string(results[1].second) << std::endl;
+      std::cout << std::right << std::setw(20) << classLabels[results[2].first] << "  , " << std::to_string(results[2].second) << std::endl;
+      std::cout << std::right << std::setw(20) << classLabels[results[3].first] << "  , " << std::to_string(results[3].second) << std::endl;
+      std::cout << std::right << std::setw(20) << classLabels[results[4].first] << "  , " << std::to_string(results[4].second) << std::endl;
       std::cout << std::endl;
+
+
+/*
+// 将classify 结果显示在屏幕中
+ */
+	  std::string  results0;
+	  std::string  results1;
+	  std::string  results2;
+	  std::string  results3;
+	  std::string  results4;
+
+
+
+	  results0 =to_string(results[0].second) ;
+	  results1 =to_string(results[1].second) ;
+	  results2 =to_string(results[2].second) ;
+	  results3 =to_string(results[3].second) ;
+	  results4 =to_string(results[4].second) ;
                              
+	  std::string  class0 = classLabels[results[0].first];
+	  std::string  class1 = classLabels[results[1].first];
+	  std::string  class2 = classLabels[results[2].first];
+
+	 // cv::putText(temp, "std::to_string(results[0].second", cv::Point(1000, 120), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+	 // cv::putText(temp, "mouthMar: " + to_string(mouthMar), cv::Point(1000, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
+
+
+
+
+
+
+
+
 
 #endif
 
@@ -878,14 +913,18 @@ mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
 	#endif
 
 
-	  //try
-	  //{
 
 	  vsdk::UMat output_umat = vsdk::UMat(HEIGHT, WIDTH, CV_8UC3);
 
 	  cv::Mat temp = lFrame.mUMat.getMat(vsdk::ACCESS_RW | OAL_USAGE_CACHED);
 
 
+
+	cv::putText(temp, class0  + results0, cv::Point(1000, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+	cv::putText(temp, class1  + results1, cv::Point(1000, 180), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+	cv::putText(temp, class2  + results2, cv::Point(1000, 200), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+	 // cv::putText(temp, class3  + results3, cv::Point(1000, 220), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+	 // cv::putText(temp, class4  + results4, cv::Point(1000, 240), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 
 
 
