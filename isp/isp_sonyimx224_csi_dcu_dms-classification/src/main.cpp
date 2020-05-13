@@ -1,6 +1,12 @@
 /*****************************************************************************
 
-Version8:
+
+version9:
+
+
+Version8:解决输入精度问题 bug:模型的输入通道rgb 可能读取顺序错误，推理出现较大误差。--2020.05.11
+1).无法解决这个问题
+
 
 
 version7:对工程代码结构优化
@@ -14,6 +20,7 @@ version7:对工程代码结构优化
 Version6: 添加 classfication ,用来检测相关的 demo
 
 version5:保存打哈欠时刻人，闭眼时刻人的状态并截图显示 -- 2019.12.23
+1).添加保存函数
 
 
 
@@ -122,6 +129,7 @@ using namespace std;
 #define  Param true
 
 
+#define FRAME_SAVE true
 
 
 #if Param
@@ -1097,6 +1105,25 @@ mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
 			cv::putText(temp, "mouthMar: " + to_string(mouthMar), cv::Point(1000, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
 
 
+			#if FRAME_SAVE
+
+		//	EXTRACT_FOLDER = './data/extract_folder' ;// 存放帧图片的位置
+
+			//stringstream str;    //stringstream字符串流，将long类型的转换成字符型传给对象str
+
+			//long currentFrame = 0; //定义当前帧
+
+			cv::imwrite("extract_folder.jpg" , temp);
+
+			#endif
+
+
+
+
+
+
+
+
 
 
 			 FILE *file_in = fopen("leftEyeEar.txt", "a");
@@ -1598,6 +1625,10 @@ double mouth_aspect_ratio(std::vector<cv::Point>mouth)
 	double calc_mouth = (short_axis_A_mouth + short_axis_B_mouth) / (2.0 * long_axis_C_mouth);  // calc_ear --> calc_mouth
 	return calc_mouth;
 }
+
+
+
+
 
 
 
