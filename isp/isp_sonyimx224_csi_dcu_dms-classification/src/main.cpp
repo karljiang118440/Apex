@@ -649,7 +649,7 @@ APEX_Init();
 #if Param 
 const std::string& aMnetGraph = "data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb";
 const std::string& aResultGraph = "data/airunner/frozen_mb1_dms_float_outputlayers_graph.pb";
-const std::string& aSlimLabelsFile = "data/airunner/image_classification/labels.txt";
+const std::string& aSlimLabelsFile = "data/airunner/image_classification/labels-dms.txt";
 
 
 
@@ -801,13 +801,6 @@ std::cout << "mark4" << std::endl;
 
 cv::Mat camera_mat = lFrame.mUMat.getMat(vsdk::ACCESS_RW | OAL_USAGE_CACHED);
 
-#if 0
-mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
-                      "data/airunner/frozen_mb1_dms_float_outputlayers_graph.pb",
-                      camera_mat,
-                      "data/airunner/image_classification/labels.txt");
-#endif
-
 
 /*version7: parameters definition*/
 
@@ -870,7 +863,7 @@ mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
  */
 
 
- #if 1 // 检测多个结果
+ #if 0 // 检测多个结果
 
 	  std::string  results0;
 	  std::string  results1;
@@ -886,20 +879,7 @@ mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
 	  results3 =to_string(results[3].second) ;
 	  results4 =to_string(results[4].second) ;
 
-	  //define 行为
- #if  0                          
-	  std::string  SAFE = classLabels[results[0].first];
-	  std::string  typing = classLabels[results[1].first];
-	  std::string  typing = classLabels[results[2].first];
-	  std::string  phone = classLabels[results[3].first];
-	  std::string  phone = classLabels[results[4].first];
-	  std::string  RADIO = classLabels[results[5].first];
-	  std::string  DRINK = classLabels[results[6].first];
-	  std::string  backwards = classLabels[results[7].first];
-	  std::string  MAKEUP = classLabels[results[8].first];
-	  std::string  TALK = classLabels[results[9].first];
 
-#endif
 	 // cv::putText(temp, "std::to_string(results[0].second", cv::Point(1000, 120), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 	 // cv::putText(temp, "mouthMar: " + to_string(mouthMar), cv::Point(1000, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
 
@@ -955,10 +935,15 @@ mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
 #endif 
 
 
-#if 1 //画面显示单个分类情况，并用字符表示 --20200518
 
-	//cv::putText(temp, class0  + results0, cv::Point(1000, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
+
+	//cv::putText(temp, "warn: " + classLabels[results[0].first], cv::Point(1000, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
 	//显示分类目标及结果
+	//转移到其他部分，否则 temp 会把图像镜像
+
+
+#if 0 //画面显示单个分类情况，并用字符表示 --20200518
+
 
 /*
 	  std::string  SAFE = classLabels[results[0].first];
@@ -1035,6 +1020,9 @@ if(classLabels[results[0].first]== c1 || c2 )
 	  cv::Mat face_one_gray;
 
       cv::flip(temp, temp, 0); //20200518
+
+	  cv::putText(temp, "warn: " + classLabels[results[0].first], cv::Point(1000, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
+
 
 	  cv_image<bgr_pixel> cimg(temp);
 
@@ -1337,6 +1325,17 @@ if(classLabels[results[0].first]== c1 || c2 )
 
 
     arContext.mFrmCnt++;
+
+
+#if 0
+//used for test :20200518
+
+	cv::Mat dispaly_mat = lFrame.mUMat.getMat(vsdk::ACCESS_RW | OAL_USAGE_CACHED);
+	cv::flip(dispaly_mat, dispaly_mat, 0);
+	lFrame.mUMat = dispaly_mat.getUMat(cv::ACCESS_READ|OAL_USAGE_CACHED);
+#endif 	
+
+
 
     lDcuOutput.PutFrame(lFrame.mUMat);
 
