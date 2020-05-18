@@ -5,7 +5,7 @@ version9:
 
 
 Version8:解决输入精度问题 bug:模型的输入通道rgb 可能读取顺序错误，推理出现较大误差。--2020.05.11
-1).无法解决这个问题
+1).无法解决这个问题 ---> 只显示最终结果，而不需要把具体数据写出来。完美。
 
 
 
@@ -129,7 +129,7 @@ using namespace std;
 #define  Param true
 
 
-#define FRAME_SAVE true
+#define FRAME_SAVE false
 
 
 #if Param
@@ -868,6 +868,10 @@ mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
 /*
 // 将classify 结果显示在屏幕中
  */
+
+
+ #if 1 // 检测多个结果
+
 	  std::string  results0;
 	  std::string  results1;
 	  std::string  results2;
@@ -888,6 +892,8 @@ mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
 
 	 // cv::putText(temp, "std::to_string(results[0].second", cv::Point(1000, 120), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 	 // cv::putText(temp, "mouthMar: " + to_string(mouthMar), cv::Point(1000, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
+
+#endif
 
 
 
@@ -928,11 +934,31 @@ mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
 
 
 
+
+
+#if 0 //画面显示多个结果
+
 	cv::putText(temp, class0  + results0, cv::Point(1000, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 	cv::putText(temp, class1  + results1, cv::Point(1000, 180), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 	cv::putText(temp, class2  + results2, cv::Point(1000, 200), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 	 // cv::putText(temp, class3  + results3, cv::Point(1000, 220), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 	 // cv::putText(temp, class4  + results4, cv::Point(1000, 240), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
+
+
+#endif 
+
+
+#if 1 //画面显示单个分类情况，并用字符表示 --20200518
+
+	cv::putText(temp, class0  + results0, cv::Point(1000, 160), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
+
+
+//cv::putText(temp, titleDms, cv::Point(temp.cols / 2 - titleDms.size() / 2 * 20, 50), CV_FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(255, 0, 0), 2);
+
+#endif 
+
+
+
 
 
 
@@ -949,7 +975,8 @@ mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
 	  // Grab a frame  
 	  cv::Mat face_one_gray;
 
-      cv::flip(temp, temp, 0);
+      cv::flip(temp, temp, 0); //20200518
+
 	  cv_image<bgr_pixel> cimg(temp);
 
 
@@ -1247,23 +1274,6 @@ mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
 
 
 	memcpy( (char*)output_umat.getMat(vsdk::ACCESS_RW | OAL_USAGE_CACHED).data, (char*)temp.data, temp.rows * temp.cols * temp.channels() );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
