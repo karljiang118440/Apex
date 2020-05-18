@@ -885,18 +885,25 @@ mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
 	  results2 =to_string(results[2].second) ;
 	  results3 =to_string(results[3].second) ;
 	  results4 =to_string(results[4].second) ;
-                             
-	  std::string  class0 = classLabels[results[0].first];
-	  std::string  class1 = classLabels[results[1].first];
-	  std::string  class2 = classLabels[results[2].first];
 
+	  //define 行为
+ #if  0                          
+	  std::string  SAFE = classLabels[results[0].first];
+	  std::string  typing = classLabels[results[1].first];
+	  std::string  typing = classLabels[results[2].first];
+	  std::string  phone = classLabels[results[3].first];
+	  std::string  phone = classLabels[results[4].first];
+	  std::string  RADIO = classLabels[results[5].first];
+	  std::string  DRINK = classLabels[results[6].first];
+	  std::string  backwards = classLabels[results[7].first];
+	  std::string  MAKEUP = classLabels[results[8].first];
+	  std::string  TALK = classLabels[results[9].first];
+
+#endif
 	 // cv::putText(temp, "std::to_string(results[0].second", cv::Point(1000, 120), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 	 // cv::putText(temp, "mouthMar: " + to_string(mouthMar), cv::Point(1000, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
 
 #endif
-
-
-
 
 
 
@@ -950,16 +957,68 @@ mobilenet_loop_Camera("data/airunner/frozen_mb1_dms_bn_qsym_final_part.pb",
 
 #if 1 //画面显示单个分类情况，并用字符表示 --20200518
 
-	cv::putText(temp, class0  + results0, cv::Point(1000, 160), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
+	//cv::putText(temp, class0  + results0, cv::Point(1000, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
+	//显示分类目标及结果
+
+/*
+	  std::string  SAFE = classLabels[results[0].first];
+	  std::string  typing = classLabels[results[1].first];
+	  std::string  typing = classLabels[results[2].first];
+	  std::string  phone = classLabels[results[3].first];
+	  std::string  phone = classLabels[results[4].first];
+	  std::string  RADIO = classLabels[results[5].first];
+	  std::string  DRINK = classLabels[results[6].first];
+	  std::string  backwards = classLabels[results[7].first];
+	  std::string  MAKEUP = classLabels[results[8].first];
+	  std::string  TALK = classLabels[results[9].first];
+
+*/
+
+std::string c  ;
+std::string c1;
+std::string c2;
+std::string c3;
+std::string c4;
+std::string c5;
+std::string c6;
+std::string c7;
+std::string c8;
+std::string c9;
+
+if( c   == classLabels[results[0].first]  )
+	cv::putText(temp, "SAFE", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
 
 
+
+if( c1 == classLabels[results[0].first] || c2 == classLabels[results[0].first] )
+	cv::putText(temp, "typing", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
+
+
+if( c3 == classLabels[results[0].first] || c4 == classLabels[results[0].first] )
+	cv::putText(temp, "phone", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
+
+if( c5 == classLabels[results[0].first])
+	cv::putText(temp, "RADIO", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
+
+if( c6 == classLabels[results[0].first])
+	cv::putText(temp, "DRINK", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
+
+if( c7 == classLabels[results[0].first])
+	cv::putText(temp, "backwards", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
+
+if( c8 == classLabels[results[0].first])
+	cv::putText(temp, "MAKEUP", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
+
+if( c9 == classLabels[results[0].first])
+	cv::putText(temp, "TALK", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
+
+/*
+if(classLabels[results[0].first]== c1 || c2 )
+	cv::putText(temp, "typing", cv::Point(1000, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
+*/
 //cv::putText(temp, titleDms, cv::Point(temp.cols / 2 - titleDms.size() / 2 * 20, 50), CV_FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(255, 0, 0), 2);
 
 #endif 
-
-
-
-
 
 
 
