@@ -141,7 +141,7 @@ Version9: 定义显示DMS条件
 #define  Param true
 
 
-#define FRAME_SAVE false
+#define FRAME_SAVE true
 
 
 #if Param
@@ -1094,6 +1094,8 @@ if(classLabels[results[0].first]== c1 || c2 )
 		 // cv::rectangle(temp, cv::Point(face_rect[i].x*scaleTony, face_rect[i].y*scaleTony), cv::Point(face_rect[i].x*scaleTony + face_rect[i].width*scaleTony, face_rect[i].y*scaleTony + face_rect[i].height*scaleTony), cv::Scalar(0, 255, 0), 2);
 		  dlib::rectangle r((long)face_rect[i].x*scaleTony, (long)face_rect[i].y*scaleTony, (long)(face_rect[i].x*scaleTony + face_rect[i].width*scaleTony), (long)(face_rect[i].y*scaleTony + face_rect[i].height*scaleTony));
 
+		  printf("face_rect[i].x*scaleTony = %f\n",face_rect[i].x*scaleTony);
+
 		  // Find the pose of each face.
 		  shapes.push_back(pose_model(cimg, r));
 
@@ -1117,14 +1119,33 @@ if(classLabels[results[0].first]== c1 || c2 )
 		  cv::rectangle(temp, cv::Point(face_rect[max_index].x*scaleTony, face_rect[max_index].y*scaleTony), cv::Point(face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony, face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony), cv::Scalar(0, 255, 0), 2);
 		//	cv::rectangle(temp, cv::Point(face_rect[max_index].x, face_rect[max_index].y), cv::Point(face_rect[max_index].x + face_rect[max_index].width, face_rect[max_index].y + face_rect[max_index].height), cv::Scalar(0, 255, 0), 2);
 
+
+
+		  printf("face_rect[max_index].x*scaleTony = %f\n",face_rect[max_index].x*scaleTony);
+		  printf("face_rect[max_index].y*scaleTony = %f\n",face_rect[max_index].y*scaleTony);
+		  printf("face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony = %f\n",face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony);
+		  printf("face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony = %f\n",face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony);
+/*
+
+
+//***************** 将脸部区域提取显示*********************20200519
+
 	 	  cv::Mat frame_face = temp(cv::Rect(face_rect[max_index].x*scaleTony,\
 		   									face_rect[max_index].y*scaleTony, \
 			 								face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony, \
 											face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony)); 
 
 
-	 	  cv::Mat imageROI1 = temp(cv::Rect(temp.cols - frame_face.cols, temp.rows - frame_face.rows, frame_face.cols, frame_face.rows)); 
+	 	  //cv::Mat imageROI1 = temp(cv::Rect(temp.cols - frame_face.cols, temp.rows - frame_face.rows, frame_face.cols, frame_face.rows)); 
+	 	  //cv::Mat imageROI1 = temp(cv::Rect(0, 0, frame_face.cols, frame_face.rows)); 
+		  cv::Rect imageROI1 = cv::Rect(500, 500, frame_face.cols, frame_face.rows);
 
+		  //frame_face.copyTo(temp(imageROI1));
+
+
+//******************************************************
+
+*/
 
 		  }
 		  else
@@ -1134,13 +1155,22 @@ if(classLabels[results[0].first]== c1 || c2 )
 		  cv::rectangle(temp, cv::Point(face_rect[i].x*scaleTony, face_rect[i].y*scaleTony), cv::Point(face_rect[i].x*scaleTony + face_rect[i].width*scaleTony, face_rect[i].y*scaleTony + face_rect[i].height*scaleTony), cv::Scalar(125, 125, 125), 2);
 		//	cv::rectangle(temp, cv::Point(face_rect[i].x, face_rect[i].y), cv::Point(face_rect[i].x + face_rect[i].width, face_rect[i].y + face_rect[i].height), cv::Scalar(125, 125, 125), 2);
 
+/*
 	 	  cv::Mat frame_face = temp(cv::Rect(face_rect[max_index].x*scaleTony,\
 		   									face_rect[max_index].y*scaleTony, \
 			 								face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony, \
 											face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony)); 
 
+*/
 
-	 	  cv::Mat imageROI1 = temp(cv::Rect(temp.cols - frame_face.cols, temp.rows - frame_face.rows, frame_face.cols, frame_face.rows)); 
+
+		  printf("face_rect[max_index].x*scaleTony = %f\n",face_rect[max_index].x*scaleTony);
+		  printf("face_rect[max_index].y*scaleTony = %f\n",face_rect[max_index].y*scaleTony);
+		  printf("face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony = %f\n",face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony);
+		  printf("face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony = %f\n",face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony);
+
+
+
 
 		  }
 	  }
@@ -1210,53 +1240,39 @@ if(classLabels[results[0].first]== c1 || c2 )
 Version9: 定义显示DMS条件
 */
 
+
+		#if FRAME_SAVE
+
         	//#if dms_display
-			#if 0
+			
 
-			if(mouthMar > 0.75){
+			#if 1
 
-				int karl__display_flags =1;
+			if(mouthMar > 0.5){
 
 
-				cv::Mat frame_face = cv::rectangle(temp, cv::Point(face_rect[max_index].x*scaleTony, face_rect[max_index].y*scaleTony), \
-												  cv::Point(face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony, \
-												  face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony), cv::Scalar(0, 255, 0), 2); //提取人脸区域
+				cv::Mat frame_face(temp.cols/4,temp.rows/2,CV_8UC3);
 
+				//cv::resize(temp,frame_face,frame_face.size(),0,0,interpolation);
+				cv::resize(temp,frame_face,frame_face.size());
 				
 	  
-	 			cv::Mat imageROI1 = temp(cv::Rect(temp.cols - frame_face.cols, temp.rows - frame_face.rows, frame_face.cols, frame_face.rows)); 
+	 			//cv::Mat imageROI1 = temp(cv::Rect(temp.cols - frame_face.cols, temp.rows - frame_face.rows, frame_face.cols, frame_face.rows)); 
+	 			cv::Mat imageROI1 = temp(cv::Rect(0, 400, frame_face.cols, frame_face.rows)); 
+
+
 
 	  			cv::addWeighted(imageROI1, 0.2, frame_face, 0.8, 0.0, imageROI1);
 
 			}
 
-			
-
-			
-
-			if(karl__display_flags){
 
 
-				
+			//cv::imwrite("extract_folder.jpg" , temp);
 
-			}
+			#endif  
 
-			#endif 
-
-
-
-			#if FRAME_SAVE
-
-		//	EXTRACT_FOLDER = './data/extract_folder' ;// 存放帧图片的位置
-
-			//stringstream str;    //stringstream字符串流，将long类型的转换成字符型传给对象str
-
-			//long currentFrame = 0; //定义当前帧
-
-			cv::imwrite("extract_folder.jpg" , temp);
-
-			#endif
-
+		#endif  //end of FRAME_SAVE
 
 
 
@@ -1403,6 +1419,7 @@ Version9: 定义显示DMS条件
 	 			cv::Mat imageROI1 = temp(cv::Rect(temp.cols - frame_face.cols, temp.rows - frame_face.rows, frame_face.cols, frame_face.rows)); 
 
 	  			cv::addWeighted(imageROI1, 0.2, frame_face, 0.8, 0.0, imageROI1);
+				//cv::addWeighted(imageROI, 0.2, logo, 0.8, 0.0, imageROI);
 				
 
 			}
