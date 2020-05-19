@@ -1,7 +1,12 @@
 /*****************************************************************************
 
 
-version9:
+version9:保存打哈欠时刻人，闭眼时刻人的状态并截图显示 -- 2019.12.23
+
+1).添加保存函数
+
+2) #define framesaver 
+
 
 
 Version8:解决输入精度问题 bug:模型的输入通道rgb 可能读取顺序错误，推理出现较大误差。--2020.05.11
@@ -19,8 +24,6 @@ version7:对工程代码结构优化
 
 Version6: 添加 classfication ,用来检测相关的 demo
 
-version5:保存打哈欠时刻人，闭眼时刻人的状态并截图显示 -- 2019.12.23
-1).添加保存函数
 
 
 
@@ -122,6 +125,15 @@ using namespace std;
 /*airunner 检测*/
 #include"test_cases.hpp"
 #include "apex.h"
+
+
+/*
+Version9: 定义显示DMS条件
+*/
+
+#define dms_display true
+
+
 
 
 
@@ -633,10 +645,6 @@ static int32_t Run(AppContext& arContext)
   //-----------------------------------------------2019.8.22---------------------end---------------------
 
 /*classfication*/
- std::cout << "mark" << std::endl;
-
-
-
 
 
 APEX_Init();
@@ -1108,6 +1116,16 @@ if(classLabels[results[0].first]== c1 || c2 )
 			
 		  cv::rectangle(temp, cv::Point(face_rect[max_index].x*scaleTony, face_rect[max_index].y*scaleTony), cv::Point(face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony, face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony), cv::Scalar(0, 255, 0), 2);
 		//	cv::rectangle(temp, cv::Point(face_rect[max_index].x, face_rect[max_index].y), cv::Point(face_rect[max_index].x + face_rect[max_index].width, face_rect[max_index].y + face_rect[max_index].height), cv::Scalar(0, 255, 0), 2);
+
+	 	  cv::Mat frame_face = temp(cv::Rect(face_rect[max_index].x*scaleTony,\
+		   									face_rect[max_index].y*scaleTony, \
+			 								face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony, \
+											face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony)); 
+
+
+	 	  cv::Mat imageROI1 = temp(cv::Rect(temp.cols - frame_face.cols, temp.rows - frame_face.rows, frame_face.cols, frame_face.rows)); 
+
+
 		  }
 		  else
 		  {
@@ -1115,6 +1133,15 @@ if(classLabels[results[0].first]== c1 || c2 )
 			
 		  cv::rectangle(temp, cv::Point(face_rect[i].x*scaleTony, face_rect[i].y*scaleTony), cv::Point(face_rect[i].x*scaleTony + face_rect[i].width*scaleTony, face_rect[i].y*scaleTony + face_rect[i].height*scaleTony), cv::Scalar(125, 125, 125), 2);
 		//	cv::rectangle(temp, cv::Point(face_rect[i].x, face_rect[i].y), cv::Point(face_rect[i].x + face_rect[i].width, face_rect[i].y + face_rect[i].height), cv::Scalar(125, 125, 125), 2);
+
+	 	  cv::Mat frame_face = temp(cv::Rect(face_rect[max_index].x*scaleTony,\
+		   									face_rect[max_index].y*scaleTony, \
+			 								face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony, \
+											face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony)); 
+
+
+	 	  cv::Mat imageROI1 = temp(cv::Rect(temp.cols - frame_face.cols, temp.rows - frame_face.rows, frame_face.cols, frame_face.rows)); 
+
 		  }
 	  }
 
@@ -1177,6 +1204,45 @@ if(classLabels[results[0].first]== c1 || c2 )
 			if(mouthMar > 0.75) 
 			cv::putText(temp, "Mouth is Open!", cv::Point(1000, 120), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
 			cv::putText(temp, "mouthMar: " + to_string(mouthMar), cv::Point(1000, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
+
+
+/*
+Version9: 定义显示DMS条件
+*/
+
+        	//#if dms_display
+			#if 0
+
+			if(mouthMar > 0.75){
+
+				int karl__display_flags =1;
+
+
+				cv::Mat frame_face = cv::rectangle(temp, cv::Point(face_rect[max_index].x*scaleTony, face_rect[max_index].y*scaleTony), \
+												  cv::Point(face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony, \
+												  face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony), cv::Scalar(0, 255, 0), 2); //提取人脸区域
+
+				
+	  
+	 			cv::Mat imageROI1 = temp(cv::Rect(temp.cols - frame_face.cols, temp.rows - frame_face.rows, frame_face.cols, frame_face.rows)); 
+
+	  			cv::addWeighted(imageROI1, 0.2, frame_face, 0.8, 0.0, imageROI1);
+
+			}
+
+			
+
+			
+
+			if(karl__display_flags){
+
+
+				
+
+			}
+
+			#endif 
+
 
 
 			#if FRAME_SAVE
@@ -1317,6 +1383,32 @@ if(classLabels[results[0].first]== c1 || c2 )
 	  {
 		  cv::putText(temp, iniDriverState, cv::Point(SCREEN_LEFT_X_AXIS, SCREEN_LEFT_Y_AXIS_FACE_NO), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
 	  }
+
+
+/*
+Version9: 定义显示DMS条件
+*/
+
+        	//#if dms_display
+			#if 0
+
+			while(karl__display_flags){
+
+				cv::Mat frame_face = cv::rectangle(temp, cv::Point(face_rect[max_index].x*scaleTony, face_rect[max_index].y*scaleTony), \
+												  cv::Point(face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony, \
+												  face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony), cv::Scalar(0, 255, 0), 2); //提取人脸区域
+
+				
+	  
+	 			cv::Mat imageROI1 = temp(cv::Rect(temp.cols - frame_face.cols, temp.rows - frame_face.rows, frame_face.cols, frame_face.rows)); 
+
+	  			cv::addWeighted(imageROI1, 0.2, frame_face, 0.8, 0.0, imageROI1);
+				
+
+			}
+
+
+			#endif // dms_dispaly
 
 
 
