@@ -20,8 +20,6 @@
 * THE POSSIBILITY OF SUCH DAMAGE.
 *
 ****************************************************************************/
-
-//git mark
 #include "test_cases.hpp"
 
 #ifndef _WINDOWS
@@ -52,8 +50,8 @@ int main(int argc, char** argv)
     std::cout << "2: mnetv1_ssd object detection loop demo. " << std::endl;
     std::cout << "3: mnetv2_ssd object detection loop demo. " << std::endl;
     std::cout << "4: mnetv2_ssdlite object detection loop demo. " << std::endl;
-    std::cout << "5: mobilenet classification single image demo." << std::endl;
-    std::cout << "6: mnetv1_ssd object detection single image demo." << std::endl;
+    std::cout << "5: mnetv1_ssd pet ." << std::endl;
+    std::cout << "6: mnetv2_ssdlite coco data." << std::endl;
     std::cout << "7: mnetv2_ssd object detection single image demo." << std::endl;
     std::cout << "8: mnetv2_ssdlite object detection single image demo." << std::endl;
     std::cout << "9: Exit the program. " << std::endl << std::endl;
@@ -89,23 +87,21 @@ int main(int argc, char** argv)
                               "data/airunner/object_detection/description.txt",
                               "data/airunner/object_detection/mscoco_labels.txt", 91, 2);
       break;
+
+
     case 5:
-#if 0
-      status = case_mobilenet("data/airunner/frozen_mobilenet_q_sym_final_part.pb",
-                              "data/airunner/frozen_mb1_1.0_224_quant_dms_float_outputlayers_graph.pb",
-                              "data/airunner/test_classification.jpg",
-                              "data/airunner/image_classification/imagenet_slim_labels.txt");
-#endif
 
 
-      status = case_mobilenet("data/airunner/frozen_mb1_1.0_224_quant_dms_bn_qsym_final_part.pb",
-                              "data/airunner/frozen_mb1_1.0_224_quant_dms_float_outputlayers_graph.pb",
-                              "data/airunner/image_classification/dirver.jpg",
-                              "data/airunner/image_classification/labels.txt");
+      status =
+          case_mssd("data/airunner/ssd_mb1_pet_part_bn_quant_final.pb",
+                    "data/airunner/test_object_detection.jpg", "data/airunner/object_detection/mscoco_labels.txt", 91, 2);
+
       break;
+
+
     case 6:
       status =
-          case_mssd("data/airunner/model/ssdlite_mb2/frozen_ssdlite_mb2_part_bn_quant_final.pb",
+          case_mssd("data/airunner/model/coco/frozen_ssdlite_mb2_part_bn_quant_final.pb",
                     "data/airunner/test_object_detection.jpg", "data/airunner/object_detection/mscoco_labels.txt");
 
       #if 0
@@ -124,18 +120,42 @@ int main(int argc, char** argv)
     #endif
 
 
+    #if 0
       status =
-          case_mssd("data/airunner/model/ssdlite_mb2/frozen_ssdlite_mb2_part_bn_quant_final-person.pb",
-                    "data/airunner/test_object_detection.jpg", "data/airunner/object_detection/mscoco_labels.txt", 91, 2);
+          case_mssd("data/airunner/model/ssdlite_mb2/frozen_ssdlite_mb2_part_bn_quant_final.pb",
+                    "data/airunner/object_detection/dog.jpg", "data/airunner/object_detection/mscoco_labels-person.txt", 1, 2);  //mscoco_labels-person
       break;
+    #endif
+
+
+    #if 1
+      status =
+          case_mssd("data/airunner/model/ssdlite_mb2/frozen_ssdlite_mb2_part_bn_quant_final.pb",
+                    "data/airunner/object_detection/person1.jpg", "data/airunner/object_detection/mscoco_labels.txt", 2, 2);  //mscoco_labels-person
+      break;
+    #endif
+
+
 
 
 
     case 8:
+
+    #if 0
+      status =
+          case_mssd("data/airunner/model/ssdlite_mb2/frozen_ssdlite_mb2_part_bn_quant_final.pb",
+                    "data/airunner/object_detection/person1.jpg", "data/airunner/object_detection/mscoco_labels-person.txt", 91, 2);
+      break;
+    #endif
+
+
+    #if 1
       status =
           case_mssd("data/airunner/frozen_mssd_v2_lite_part_bn_quant_final2.pb",
-                    "data/airunner/test_object_detection.jpg", "data/airunner/object_detection/mscoco_labels.txt", 91, 2);
+                    "data/airunner/object_detection/person1.jpg", "data/airunner/object_detection/mscoco_labels.txt", 91, 2);
       break;
+    #endif
+
     case 9:
     {
       std::cout << "Exiting .... " << std::endl;
