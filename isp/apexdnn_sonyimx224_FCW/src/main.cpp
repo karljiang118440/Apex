@@ -24,6 +24,8 @@
 ****************************************************************************/
 #define AirParam true
 
+#define display_test true
+
 #if AirParam
 
 #include <airunner_postprocessing_ssd.hpp>
@@ -223,6 +225,10 @@ static bool sStop = false; ///< to signal Ctrl+c from command line
 #if AirParam
 
 
+
+
+
+
 inline std::vector<Tensor*> case_mssd_target(const std::string& aMssdGraph,
                                              const std::string& aImageFile,
                                              cv::Mat   Input_camera,
@@ -230,9 +236,6 @@ inline std::vector<Tensor*> case_mssd_target(const std::string& aMssdGraph,
                                              const std::string& target,
                                              int numClasses, 
                                              int anchorGenVer)
-
-
-
 
 
 {
@@ -364,7 +367,14 @@ inline std::vector<Tensor*> case_mssd_target(const std::string& aMssdGraph,
 
 printf("mark1 \n");
 
-resizeBilinearAndNormalize(Input_camera, lApexNetInput, true, {128}, 1.0f);
+
+#if display_test 
+
+cv::Mat Input_camera1 = cv::imread("data/airunner/test_object_detection.jpg",1);
+
+#endif 
+
+resizeBilinearAndNormalize(Input_camera1, lApexNetInput, true, {128}, 1.0f);
 
   lApexNetInput->Flush();
   output[0]->Invalidate();
@@ -450,7 +460,15 @@ printf("Mark6 \n");
 
   std::vector<BoundingBox> bboxes = multiclassNonMaxSuppression(boxes, scorePredictorList, 1, 0.35,
                                                                 0.6, 100, 100, NULL, false, true);
-  cv::Mat outImage = *outputImage;
+ 
+ 
+ 
+  //cv::Mat outImage = *outputImage;
+
+  //直接引入输入的mat ***20200526
+  cv::Mat outImage = Input_camera1;
+
+
   std::string imageResult = imagePath + ", " + std::to_string(bboxes.size()) + "\n";
 
 
@@ -497,6 +515,10 @@ printf("Mark7 \n");
   //sleep(5);
 
  */ 
+
+
+
+
   std::cout << imageResult << std::endl;
 
   outImage.release();
@@ -779,7 +801,12 @@ printf("Mark4 \n");
 
     arContext.mFrmCnt++;
 
-    lDcuOutput.PutFrame(lFrame.mUMat);
+
+
+
+    DisplayImageOD(lFrame.mUMat, outImage, classLabels, results);    
+
+   // lDcuOutput.PutFrame(lFrame.mUMat);
 
     if(arContext.mpGrabber->FramePush(lFrame) != LIB_SUCCESS)
     {
