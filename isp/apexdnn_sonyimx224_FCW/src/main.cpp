@@ -24,8 +24,6 @@
 ****************************************************************************/
 #define AirParam true
 
-#define display_test true
-
 #if AirParam
 
 #include <airunner_postprocessing_ssd.hpp>
@@ -220,324 +218,6 @@ static bool sStop = false; ///< to signal Ctrl+c from command line
 #endif // #ifndef __STANDALONE__
 
 
-
-
-#if AirParam
-
-
-
-
-
-
-inline std::vector<Tensor*> case_mssd_target(const std::string& aMssdGraph,
-                                             const std::string& aImageFile,
-                                             cv::Mat   Input_camera,
-                                             const std::string& aLabels,
-                                             const std::string& target,
-                                             int numClasses, 
-                                             int anchorGenVer)
-
-
-{
-
-
-
-#ifndef _WINDOWS
-
-  std::cout << "Running MSSD graph for " << target << std::endl;
-
-  Status_t status;
-
-  // Load MSSD graph
-  TargetInfo     lRefInfo  = TargetInfo();
-  ApexTargetInfo lApexInfo = ApexTargetInfo();
-  auto           lWorkspace =
-      std::unique_ptr<Workspace>(new Workspace(std::map<std::string, TargetInfo*>{
-          {target::REF, &lRefInfo}, {target::APEX, &lApexInfo}}));
-
-  auto net_mssd = std::unique_ptr<Graph>(new Graph(lWorkspace.get()));
-
-  Tensor* lApexNetInput = net_mssd->AddTensor(std::unique_ptr<Tensor>(
-      Tensor::Create<>("NET_INPUT_TENSOR", DataType_t::SIGNED_8BIT,
-                       TensorShape<TensorFormat_t::NHWC>{1, 300, 300, 3}, 
-                       TensorLayout<TensorFormat_t::NHWC>())));
-
-  Tensor* lApexNetInput1 = net_mssd->AddTensor(std::unique_ptr<Tensor>(
-      Tensor::Create<>("NET_INPUT_TENSOR", DataType_t::SIGNED_8BIT,
-                       TensorShape<TensorFormat_t::NHWC>{1, 300, 300, 3}, 
-                       TensorLayout<TensorFormat_t::NHWC>())));
-
-
-  auto input = std::unique_ptr<Tensor>(new Tensor("TMP_INPUT"));
-
-  lApexNetInput->SetQuantParams({QuantInfo(-1, 0)});
-  lApexNetInput->Allocate(Allocation_t::OAL);
-
-  // Integer output of the aMssdGraph
-  std::vector<Tensor*> output;
-  status = LoadNetFromTensorFlow(*net_mssd, aMssdGraph, lApexNetInput, output);
-  if(Status_t::SUCCESS != status || output.empty())
-  {
-    std::cout << "Failed to load net" << std::endl;
-    return {};
-  }
-  if(target == "APEX")
-  {
-    status = net_mssd->SetTargetHint(target::APEX);
-
-    if(Status_t::SUCCESS != status)
-    {
-      std::cout << "Set target failed" << std::endl;
-      return {};
-    }
-  }
-  else
-  {
-    status = net_mssd->SetTargetHint(target::REF);
-
-    if(Status_t::SUCCESS != status)
-    {
-      std::cout << "Set target failed" << std::endl;
-      return {};
-    }
-  }
-  status = net_mssd->Prepare();
-
-  if(Status_t::SUCCESS != status)
-  {
-    std::cout << " Net verification failed" << std::endl;
-    return {};
-  }
-
-  int   numLayers             = 6;
-  float minScale              = 0.2;
-  float maxScale              = 0.95;
-  float aspectRatios[]        = {1.f, 2.f, 1.f / 2, 3.0, 1.f / 3};
-  int   numAspectRatios       = 5;
-  int   numFeatureMaps        = 6;
-  int   featureMapShapeList[] = {
-      19, 19, 10, 10, 5, 5, 3, 3, 2, 2, 1, 1,
-  };
-
-  ssd::MultipleGridAnchorGenerator *anchorGenerator;
-  ssd::createSsdAnchors(&anchorGenerator, numLayers, minScale, maxScale, numAspectRatios, aspectRatios,
-                        nullptr, true, 1.0f, anchorGenVer);
-
-  // Create default anchor lists anchorList
-  BoxList* anchorList;
-  ssd::generateAnchors(anchorGenerator, &anchorList, numFeatureMaps, featureMapShapeList);
-  cornerToCentreBox(anchorList);
-
-  // Decode boxes
-  anchorParams *anchParams = new anchorParams;
-  anchParams->y_scale = 10.0f;
-  anchParams->x_scale = 10.0f;
-  anchParams->height_scale = 5.0f;
-  anchParams->width_scale  = 5.0f;
-
-  std::ifstream            labelfile(aLabels);
-  std::vector<std::string> classLabels;
-  std::string              line;
-  while(std::getline(labelfile, line))
-  {
-    classLabels.push_back(line);
-  }
-
-  std::vector<std::pair<int, float>> results;
-
-  std::string imagePath = aImageFile;
-  cv::Mat* outputImage = new cv::Mat();
-
-  std::cout << "Detecting objects for: " << imagePath << std::endl;
-
-
-/*
-
-  if(-1 == ReadImageToTensor(imagePath, lApexNetInput, outputImage, 128, 128, 0))
-  {
-    std::cout << "Failed to read: " << imagePath << std::endl;
-    lApexNetInput->Flush();
-    output[0]->Invalidate();
-    return {};
-  }
-
-  lApexNetInput->Flush();
-
-*/
-
-printf("mark1 \n");
-
-
-#if display_test 
-
-cv::Mat Input_camera1 = cv::imread("data/airunner/test_object_detection.jpg",1);
-
-#endif 
-
-resizeBilinearAndNormalize(Input_camera1, lApexNetInput, true, {128}, 1.0f);
-
-  lApexNetInput->Flush();
-  output[0]->Invalidate();
-  output[1]->Invalidate();
-
-  // 2. Run preprocessed img through MSSD to produce raw class and box prediction results
-  stopwatch(true);
-  status = net_mssd->Run();
-  stopwatch(false, "mssd object detection");
-  if(Status_t::SUCCESS != status)
-  {
-    std::cout << "Net verification failed" << std::endl;
-    return {};
-  }
-
-
-printf("Mark5 \n");
-
-
-  Tensor* boxOutputFixedPoint   = nullptr;
-  Tensor* classOutputFixedPoint = nullptr;
-
-  for(auto& o : output)
-  {
-    if(o->Identifier() == "concat")
-    {
-      boxOutputFixedPoint = o;
-    }
-    if(o->Identifier() == "concat_1")
-    {
-      classOutputFixedPoint = o;
-    }
-  }
-  if(!boxOutputFixedPoint || !classOutputFixedPoint)
-  {
-    std::cout << "Net output box/class not found " << std::endl;
-    return {};
-  }
-
-  std::cout << boxOutputFixedPoint->Dim(TensorDim_t::BATCH) << " "
-            << boxOutputFixedPoint->Dim(TensorDim_t::HEIGHT) << " "
-            << boxOutputFixedPoint->Dim(TensorDim_t::WIDTH) << " "
-            << boxOutputFixedPoint->Dim(TensorDim_t::OUTPUT_CHANNELS) << " " << std::endl; 
-
-  std::cout << classOutputFixedPoint->Dim(TensorDim_t::BATCH) << " "
-            << classOutputFixedPoint->Dim(TensorDim_t::HEIGHT) << " "
-            << classOutputFixedPoint->Dim(TensorDim_t::WIDTH) << " "
-            << classOutputFixedPoint->Dim(TensorDim_t::OUTPUT_CHANNELS) << " " << std::endl; 
- 
-  int numBoxOutput = boxOutputFixedPoint->Dim(TensorDim_t::BATCH)*
-                     boxOutputFixedPoint->Dim(TensorDim_t::HEIGHT)*
-                     boxOutputFixedPoint->Dim(TensorDim_t::WIDTH)*
-                     boxOutputFixedPoint->Dim(TensorDim_t::OUTPUT_CHANNELS);
-  int numClassOutput = classOutputFixedPoint->Dim(TensorDim_t::BATCH)*
-                       classOutputFixedPoint->Dim(TensorDim_t::HEIGHT)*
-                       classOutputFixedPoint->Dim(TensorDim_t::WIDTH)*
-                       classOutputFixedPoint->Dim(TensorDim_t::OUTPUT_CHANNELS);
-
-  if (numBoxOutput != 1917*4 && numClassOutput != 1917*numClasses)
-  {
-      std::cout << "Net output does not match SSD setting:" << numBoxOutput << " " << numClassOutput << std::endl;
-      return {};
-  }
-
-
-printf("Mark6 \n");
-
-
-  // 3. Apply post-processing to obtain final bounding box results
-  BoxList* boxPredictorList  = new BoxList;
-  boxPredictorList->numBoxes = 1917;
-  boxPredictorList->boxList  = nullptr;
-
-  tensorToFloatList(boxOutputFixedPoint, &boxPredictorList->boxList,
-                    boxPredictorList->numBoxes * NUM_FLOAT_PER_BOX);
-  ScoresList* scorePredictorList = new ScoresList;
-  scorePredictorList->numBoxes   = 1917;
-  scorePredictorList->numClasses = numClasses;
-  scorePredictorList->scores     = nullptr;
-  tensorToFloatList(classOutputFixedPoint, &scorePredictorList->scores,
-                    scorePredictorList->numBoxes * scorePredictorList->numClasses);
-  BoxList* boxes = boxDecoder(anchorList, boxPredictorList, anchParams);
-
-  std::vector<BoundingBox> bboxes = multiclassNonMaxSuppression(boxes, scorePredictorList, 1, 0.35,
-                                                                0.6, 100, 100, NULL, false, true);
- 
- 
- 
-  //cv::Mat outImage = *outputImage;
-
-  //直接引入输入的mat ***20200526
-  cv::Mat outImage = Input_camera1;
-
-
-  std::string imageResult = imagePath + ", " + std::to_string(bboxes.size()) + "\n";
-
-
-printf("Mark7 \n");
-
-  int index = 0;
-  for(auto& a : bboxes)
-  {
-    float       ymin = outImage.rows * a.coord[0];
-    float       xmin = outImage.cols * a.coord[1];
-    float       ymax = outImage.rows * a.coord[2];
-    float       xmax = outImage.cols * a.coord[3];
-    std::string label =
-        std::to_string(index) + " " + std::to_string(a.classNo) + " " + std::to_string(a.score);
-    index++;
-    int outlineWidth = 5;
-
-    cv::Rect rec(xmin, ymin, xmax - xmin, ymax - ymin);
-    cv::rectangle(outImage, rec, cv::Scalar(0, 250, 50), outlineWidth);
-
-    int       fontface  = cv::FONT_HERSHEY_SIMPLEX;
-    double    scale     = 0.3;
-    int       thickness = 1;
-    int       baseline  = 0;
-    cv::Point origin    = cv::Point(xmin - outlineWidth, ymin - outlineWidth);
-    cv::Size  text      = cv::getTextSize(label, fontface, scale, thickness, &baseline);
-    cv::rectangle(outImage, origin + cv::Point(0, baseline),
-                  origin + cv::Point(text.width, -text.height), CV_RGB(0, 0, 0), CV_FILLED);
-    cv::putText(outImage, label, origin, cv::FONT_HERSHEY_SIMPLEX, scale, CV_RGB(255, 255, 255));
-    imageResult += std::to_string(ymin) + ", " + std::to_string(xmin) + ", " +
-                   std::to_string(ymax) + ", " + std::to_string(xmax) + ", " +
-                   std::to_string(a.classNo) + ", " + std::to_string(a.score) + "\n";
-
-    results.push_back(std::pair<int, float>(a.classNo, a.score));
-  }
-
-/*
-  io_FrameOutput_t lFrameOutput;
-
-  lFrameOutput.Init(DISPLAY_SCENE_WIDTH, DISPLAY_SCENE_HEIGHT, io::IO_DATA_DEPTH_08,
-                    io::IO_DATA_CH3);
-
-  //DisplayImageOD(lFrameOutput, outImage, classLabels, results);
-  //sleep(5);
-
- */ 
-
-
-
-
-  std::cout << imageResult << std::endl;
-
-  outImage.release();
-  deleteBoxList(boxPredictorList);
-  deleteScoresList(scorePredictorList);
-  results.clear();
-
-  delete anchParams;
-  deleteBoxList(anchorList);
-
-  return output;
-#else
-  return {};
-#endif
-}
-
-
-
-#endif
 
 
 
@@ -752,8 +432,149 @@ static int32_t Run(AppContext& arContext)
     return -1;
   } // if Start() failed
 
+
+
+
+
+
+const std::string& aMssdGraph = "data/airunner/model/coco/ssdlite_mb2_stand_part_bn_quant_final.pb";
+const std::string& aImageFile = "data/airunner/test_object_detection.jpg";
+const std::string& aSlimLabelsFile = "data/airunner/object_detection/mscoco_labels.txt";
+const std::string& target = "APEX";
+
+const std::string& aLabels = "data/airunner/object_detection/mscoco_labels.txt";
+
+
+
+
+cv::Mat   camera_mat;
+
+int numClasses=91;
+int anchorGenVer=2;
+
+
+
+
+
+#ifndef _WINDOWS
+
+  std::cout << "Running MSSD graph for " << target << std::endl;
+
+  Status_t status;
+
+  // Load MSSD graph
+  TargetInfo     lRefInfo  = TargetInfo();
+  ApexTargetInfo lApexInfo = ApexTargetInfo();
+  auto           lWorkspace =
+      std::unique_ptr<Workspace>(new Workspace(std::map<std::string, TargetInfo*>{
+          {target::REF, &lRefInfo}, {target::APEX, &lApexInfo}}));
+
+  auto net_mssd = std::unique_ptr<Graph>(new Graph(lWorkspace.get()));
+
+  Tensor* lApexNetInput = net_mssd->AddTensor(std::unique_ptr<Tensor>(
+      Tensor::Create<>("NET_INPUT_TENSOR", DataType_t::SIGNED_8BIT,
+                       TensorShape<TensorFormat_t::NHWC>{1, 300, 300, 3}, 
+                       TensorLayout<TensorFormat_t::NHWC>())));
+
+  auto input = std::unique_ptr<Tensor>(new Tensor("TMP_INPUT"));
+
+  lApexNetInput->SetQuantParams({QuantInfo(-1, 0)});
+  lApexNetInput->Allocate(Allocation_t::OAL);
+
+  // Integer output of the aMssdGraph
+  std::vector<Tensor*> output;
+  status = LoadNetFromTensorFlow(*net_mssd, aMssdGraph, lApexNetInput, output);
+  if(Status_t::SUCCESS != status || output.empty())
+  {
+    std::cout << "Failed to load net" << std::endl;
+    return {};
+  }
+  if(target == "APEX")
+  {
+    status = net_mssd->SetTargetHint(target::APEX);
+
+    if(Status_t::SUCCESS != status)
+    {
+      std::cout << "Set target failed" << std::endl;
+      return {};
+    }
+  }
+  else
+  {
+    status = net_mssd->SetTargetHint(target::REF);
+
+    if(Status_t::SUCCESS != status)
+    {
+      std::cout << "Set target failed" << std::endl;
+      return {};
+    }
+  }
+  status = net_mssd->Prepare();
+
+  if(Status_t::SUCCESS != status)
+  {
+    std::cout << " Net verification failed" << std::endl;
+    return {};
+  }
+
+  int   numLayers             = 6;
+  float minScale              = 0.2;
+  float maxScale              = 0.95;
+  float aspectRatios[]        = {1.f, 2.f, 1.f / 2, 3.0, 1.f / 3};
+  int   numAspectRatios       = 5;
+  int   numFeatureMaps        = 6;
+  int   featureMapShapeList[] = {
+      19, 19, 10, 10, 5, 5, 3, 3, 2, 2, 1, 1,
+  };
+
+  ssd::MultipleGridAnchorGenerator *anchorGenerator;
+  ssd::createSsdAnchors(&anchorGenerator, numLayers, minScale, maxScale, numAspectRatios, aspectRatios,
+                        nullptr, true, 1.0f, anchorGenVer);
+
+  // Create default anchor lists anchorList
+  BoxList* anchorList;
+  ssd::generateAnchors(anchorGenerator, &anchorList, numFeatureMaps, featureMapShapeList);
+  cornerToCentreBox(anchorList);
+
+  // Decode boxes
+  anchorParams *anchParams = new anchorParams;
+  anchParams->y_scale = 10.0f;
+  anchParams->x_scale = 10.0f;
+  anchParams->height_scale = 5.0f;
+  anchParams->width_scale  = 5.0f;
+
+  std::ifstream            labelfile(aLabels);
+  std::vector<std::string> classLabels;
+  std::string              line;
+  while(std::getline(labelfile, line))
+  {
+    classLabels.push_back(line);
+  }
+
+  std::vector<std::pair<int, float>> results;
+
+  std::string imagePath = aImageFile;
+  cv::Mat* outputImage = new cv::Mat();
+
+  std::cout << "Detecting objects for: " << imagePath << std::endl;
+
+printf("mark1 \n");
+
+
+
+#endif 
+
+
+
+
+
   SDI_Frame lFrame;
   // *** grabbing/processing loop ***
+
+
+printf("mark3 \n");
+
+
   for(;;)
   {
     lFrame = arContext.mpGrabber->FramePop();
@@ -765,9 +586,222 @@ static int32_t Run(AppContext& arContext)
     } // if pop failed
 
 
-printf("Mark2 \n");
 
-#if  AirParam 
+    arContext.mFrmCnt++;
+
+
+printf("mark2 \n");
+
+ #if  AirParam 
+
+
+cv::Mat camera_mat = lFrame.mUMat.getMat(vsdk::ACCESS_RW | OAL_USAGE_CACHED);
+
+cv::flip(camera_mat,camera_mat,0);
+
+
+
+printf("mark600 \n");
+
+#ifndef _WINDOWS
+
+
+printf("mark605 \n");
+
+
+resizeBilinearAndNormalize(camera_mat, lApexNetInput, true, {128}, 1.0f);
+
+  lApexNetInput->Flush();
+  output[0]->Invalidate();
+  output[1]->Invalidate();
+
+
+printf("mark615 \n");
+
+
+  // 2. Run preprocessed img through MSSD to produce raw class and box prediction results
+  stopwatch(true);
+  status = net_mssd->Run();
+  stopwatch(false, "mssd object detection");
+  if(Status_t::SUCCESS != status)
+  {
+    std::cout << "Net verification failed" << std::endl;
+    return {};
+  }
+
+
+printf("Mark625 \n");
+
+
+  Tensor* boxOutputFixedPoint   = nullptr;
+  Tensor* classOutputFixedPoint = nullptr;
+
+  for(auto& o : output)
+  {
+    if(o->Identifier() == "concat")
+    {
+      boxOutputFixedPoint = o;
+    }
+    if(o->Identifier() == "concat_1")
+    {
+      classOutputFixedPoint = o;
+    }
+  }
+  if(!boxOutputFixedPoint || !classOutputFixedPoint)
+  {
+    std::cout << "Net output box/class not found " << std::endl;
+    return {};
+  }
+
+  std::cout << boxOutputFixedPoint->Dim(TensorDim_t::BATCH) << " "
+            << boxOutputFixedPoint->Dim(TensorDim_t::HEIGHT) << " "
+            << boxOutputFixedPoint->Dim(TensorDim_t::WIDTH) << " "
+            << boxOutputFixedPoint->Dim(TensorDim_t::OUTPUT_CHANNELS) << " " << std::endl; 
+
+  std::cout << classOutputFixedPoint->Dim(TensorDim_t::BATCH) << " "
+            << classOutputFixedPoint->Dim(TensorDim_t::HEIGHT) << " "
+            << classOutputFixedPoint->Dim(TensorDim_t::WIDTH) << " "
+            << classOutputFixedPoint->Dim(TensorDim_t::OUTPUT_CHANNELS) << " " << std::endl; 
+ 
+  int numBoxOutput = boxOutputFixedPoint->Dim(TensorDim_t::BATCH)*
+                     boxOutputFixedPoint->Dim(TensorDim_t::HEIGHT)*
+                     boxOutputFixedPoint->Dim(TensorDim_t::WIDTH)*
+                     boxOutputFixedPoint->Dim(TensorDim_t::OUTPUT_CHANNELS);
+  int numClassOutput = classOutputFixedPoint->Dim(TensorDim_t::BATCH)*
+                       classOutputFixedPoint->Dim(TensorDim_t::HEIGHT)*
+                       classOutputFixedPoint->Dim(TensorDim_t::WIDTH)*
+                       classOutputFixedPoint->Dim(TensorDim_t::OUTPUT_CHANNELS);
+
+  if (numBoxOutput != 1917*4 && numClassOutput != 1917*numClasses)
+  {
+      std::cout << "Net output does not match SSD setting:" << numBoxOutput << " " << numClassOutput << std::endl;
+      return {};
+  }
+
+
+printf("Mark6 \n");
+
+
+  // 3. Apply post-processing to obtain final bounding box results
+  BoxList* boxPredictorList  = new BoxList;
+  boxPredictorList->numBoxes = 1917;
+  boxPredictorList->boxList  = nullptr;
+
+  tensorToFloatList(boxOutputFixedPoint, &boxPredictorList->boxList,
+                    boxPredictorList->numBoxes * NUM_FLOAT_PER_BOX);
+  ScoresList* scorePredictorList = new ScoresList;
+  scorePredictorList->numBoxes   = 1917;
+  scorePredictorList->numClasses = numClasses;
+  scorePredictorList->scores     = nullptr;
+  tensorToFloatList(classOutputFixedPoint, &scorePredictorList->scores,
+                    scorePredictorList->numBoxes * scorePredictorList->numClasses);
+  BoxList* boxes = boxDecoder(anchorList, boxPredictorList, anchParams);
+
+  std::vector<BoundingBox> bboxes = multiclassNonMaxSuppression(boxes, scorePredictorList, 1, 0.35,
+                                                                0.6, 100, 100, NULL, false, true);
+
+  //cv::Mat outImage = *outputImage;
+
+  cv::Mat outImage = camera_mat;
+
+
+  std::string imageResult = imagePath + ", " + std::to_string(bboxes.size()) + "\n";
+
+
+printf("Mark7 \n");
+
+  int index = 0;
+  for(auto& a : bboxes)
+  {
+    float       ymin = outImage.rows * a.coord[0];
+    float       xmin = outImage.cols * a.coord[1];
+    float       ymax = outImage.rows * a.coord[2];
+    float       xmax = outImage.cols * a.coord[3];
+    std::string label =
+        std::to_string(index) + " " + std::to_string(a.classNo) + " " + std::to_string(a.score);
+    index++;
+    int outlineWidth = 5;
+
+    cv::Rect rec(xmin, ymin, xmax - xmin, ymax - ymin);
+    cv::rectangle(outImage, rec, cv::Scalar(0, 250, 50), outlineWidth);
+
+    int       fontface  = cv::FONT_HERSHEY_SIMPLEX;
+    double    scale     = 0.3;
+    int       thickness = 1;
+    int       baseline  = 0;
+    cv::Point origin    = cv::Point(xmin - outlineWidth, ymin - outlineWidth);
+    cv::Size  text      = cv::getTextSize(label, fontface, scale, thickness, &baseline);
+    cv::rectangle(outImage, origin + cv::Point(0, baseline),
+                  origin + cv::Point(text.width, -text.height), CV_RGB(0, 0, 0), CV_FILLED);
+    cv::putText(outImage, label, origin, cv::FONT_HERSHEY_SIMPLEX, scale, CV_RGB(255, 255, 255));
+    imageResult += std::to_string(ymin) + ", " + std::to_string(xmin) + ", " +
+                   std::to_string(ymax) + ", " + std::to_string(xmax) + ", " +
+                   std::to_string(a.classNo) + ", " + std::to_string(a.score) + "\n";
+
+    results.push_back(std::pair<int, float>(a.classNo, a.score));
+  }
+
+
+  io_FrameOutput_t lFrameOutput;
+
+printf("mark737 \n");
+
+  //lFrameOutput.Init(1280, 1080, io::IO_DATA_DEPTH_08,io::IO_DATA_CH3);
+  lFrameOutput.Init(1280, 720, io::IO_DATA_DEPTH_08,io::IO_DATA_CH3);
+
+
+ printf("mark743 \n");   
+
+ printf("outImage.size= (%d , %d ),(outImage.rows , outImage.cols) \n")  ;              
+
+ // DisplayImageOD(lFrameOutput, outImage, classLabels, results);
+  //sleep(5);
+
+
+  std::cout << imageResult << std::endl;
+
+/*
+  outImage.release();
+  deleteBoxList(boxPredictorList);
+  deleteScoresList(scorePredictorList);
+  results.clear();
+
+  delete anchParams;
+  deleteBoxList(anchorList);
+*/
+
+ printf("mark768 \n");
+
+
+  //return output;
+#else
+  return {};
+#endif
+
+
+//} // end case_mssd_target
+
+
+#endif
+
+
+ 
+
+
+
+
+
+
+
+
+#if 0
+
+//添加计数功能，100帧 抓取一次画面
+
+if(arContext.mFrmCnt%1 == 0){
+
+
+  #if  AirParam 
 
 
 cv::Mat camera_mat = lFrame.mUMat.getMat(vsdk::ACCESS_RW | OAL_USAGE_CACHED);
@@ -776,11 +810,11 @@ cv::Mat camera_mat = lFrame.mUMat.getMat(vsdk::ACCESS_RW | OAL_USAGE_CACHED);
 
 #ifndef _WINDOWS
 
-const std::string& aMssdGraph = "data/airunner/mnet2ssd_inference_graph_part_bn_quant_final.pb";
+const std::string& aMssdGraph = "data/airunner/model/coco/ssdlite_mb2_stand_part_bn_quant_final.pb";
 const std::string& aImageFile = "data/airunner/test_object_detection.jpg";
 const std::string& aSlimLabelsFile = "data/airunner/object_detection/mscoco_labels.txt";
 
-printf("Mark3 \n");
+
 
   // Run APEX
   std::vector<Tensor*> apexOutput =
@@ -797,16 +831,34 @@ printf("Mark3 \n");
 
 
 
-printf("Mark4 \n");
-
-    arContext.mFrmCnt++;
+}
 
 
+else
+{
+  lDcuOutput.PutFrame(lFrame.mUMat);
+
+  printf("Mark3 \n");
+}
 
 
-    DisplayImageOD(lFrame.mUMat, outImage, classLabels, results);    
+#endif 
 
-   // lDcuOutput.PutFrame(lFrame.mUMat);
+
+lDcuOutput.PutFrame(lFrame.mUMat);
+
+
+
+
+
+
+
+
+
+
+
+
+  
 
     if(arContext.mpGrabber->FramePush(lFrame) != LIB_SUCCESS)
     {
