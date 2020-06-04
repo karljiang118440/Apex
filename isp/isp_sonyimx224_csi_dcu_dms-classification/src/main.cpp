@@ -1,4 +1,14 @@
 /*****************************************************************************
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+version11:去除log等无用信息，把疲劳状态更加苛刻的显示出来 --20200603
+
+version10: 把做分类的 temp 单独提取出来，否则会造成干扰，或者是把temp 分类任务放在最前面。--20200521
 
 
 version9:保存打哈欠时刻人，闭眼时刻人的状态并截图显示 -- 2019.12.23
@@ -807,7 +817,7 @@ std::cout << "mark4" << std::endl;
 
 /*添加 classfication */
 
-cv::Mat camera_mat = lFrame.mUMat.getMat(vsdk::ACCESS_RW | OAL_USAGE_CACHED);
+cv::Mat camera_mat = lFrame.mUMat.getMat(vsdk::ACCESS_RW | OAL_USAGE_CACHED); //0603:并没有从 temp 中抓取，只是从lframe 中抓取而已，不用修改
 
 
 /*version7: parameters definition*/
@@ -871,29 +881,6 @@ cv::Mat camera_mat = lFrame.mUMat.getMat(vsdk::ACCESS_RW | OAL_USAGE_CACHED);
  */
 
 
- #if 0 // 检测多个结果
-
-	  std::string  results0;
-	  std::string  results1;
-	  std::string  results2;
-	  std::string  results3;
-	  std::string  results4;
-
-
-
-	  results0 =to_string(results[0].second) ;
-	  results1 =to_string(results[1].second) ;
-	  results2 =to_string(results[2].second) ;
-	  results3 =to_string(results[3].second) ;
-	  results4 =to_string(results[4].second) ;
-
-
-	 // cv::putText(temp, "std::to_string(results[0].second", cv::Point(1000, 120), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
-	 // cv::putText(temp, "mouthMar: " + to_string(mouthMar), cv::Point(1000, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(255, 0, 0), 2);
-
-#endif
-
-
 
 
 
@@ -931,87 +918,11 @@ cv::Mat camera_mat = lFrame.mUMat.getMat(vsdk::ACCESS_RW | OAL_USAGE_CACHED);
 
 
 
-#if 0 //画面显示多个结果
-
-	cv::putText(temp, class0  + results0, cv::Point(1000, 160), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
-	cv::putText(temp, class1  + results1, cv::Point(1000, 180), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
-	cv::putText(temp, class2  + results2, cv::Point(1000, 200), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
-	 // cv::putText(temp, class3  + results3, cv::Point(1000, 220), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
-	 // cv::putText(temp, class4  + results4, cv::Point(1000, 240), CV_FONT_HERSHEY_SIMPLEX, FONT_SIZE_DIS, cv::Scalar(0, 0, 255), 2);
-
-
-#endif 
-
-
 
 
 	//cv::putText(temp, "warn: " + classLabels[results[0].first], cv::Point(1000, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
 	//显示分类目标及结果
 	//转移到其他部分，否则 temp 会把图像镜像
-
-
-#if 0 //画面显示单个分类情况，并用字符表示 --20200518
-
-
-/*
-	  std::string  SAFE = classLabels[results[0].first];
-	  std::string  typing = classLabels[results[1].first];
-	  std::string  typing = classLabels[results[2].first];
-	  std::string  phone = classLabels[results[3].first];
-	  std::string  phone = classLabels[results[4].first];
-	  std::string  RADIO = classLabels[results[5].first];
-	  std::string  DRINK = classLabels[results[6].first];
-	  std::string  backwards = classLabels[results[7].first];
-	  std::string  MAKEUP = classLabels[results[8].first];
-	  std::string  TALK = classLabels[results[9].first];
-
-*/
-
-std::string c  ;
-std::string c1;
-std::string c2;
-std::string c3;
-std::string c4;
-std::string c5;
-std::string c6;
-std::string c7;
-std::string c8;
-std::string c9;
-
-if( c   == classLabels[results[0].first]  )
-	cv::putText(temp, "SAFE", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
-
-
-
-if( c1 == classLabels[results[0].first] || c2 == classLabels[results[0].first] )
-	cv::putText(temp, "typing", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
-
-
-if( c3 == classLabels[results[0].first] || c4 == classLabels[results[0].first] )
-	cv::putText(temp, "phone", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
-
-if( c5 == classLabels[results[0].first])
-	cv::putText(temp, "RADIO", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
-
-if( c6 == classLabels[results[0].first])
-	cv::putText(temp, "DRINK", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
-
-if( c7 == classLabels[results[0].first])
-	cv::putText(temp, "backwards", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
-
-if( c8 == classLabels[results[0].first])
-	cv::putText(temp, "MAKEUP", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
-
-if( c9 == classLabels[results[0].first])
-	cv::putText(temp, "TALK", cv::Point(500, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
-
-/*
-if(classLabels[results[0].first]== c1 || c2 )
-	cv::putText(temp, "typing", cv::Point(1000, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
-*/
-//cv::putText(temp, titleDms, cv::Point(temp.cols / 2 - titleDms.size() / 2 * 20, 50), CV_FONT_HERSHEY_SIMPLEX, 0.9, cv::Scalar(255, 0, 0), 2);
-
-#endif 
 
 
 
@@ -1029,7 +940,13 @@ if(classLabels[results[0].first]== c1 || c2 )
 
       cv::flip(temp, temp, 0); //20200518
 
-	  cv::putText(temp, "warn: " + classLabels[results[0].first], cv::Point(1000, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
+	  if(results[0].second > 0.2){ //0603:修改显示条件
+
+	  cv::putText(temp, "warn: " + classLabels[results[0].first], cv::Point(800, 300), CV_FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 4);
+
+
+	  }
+
 
 
 	  cv_image<bgr_pixel> cimg(temp);
@@ -1094,7 +1011,7 @@ if(classLabels[results[0].first]== c1 || c2 )
 		 // cv::rectangle(temp, cv::Point(face_rect[i].x*scaleTony, face_rect[i].y*scaleTony), cv::Point(face_rect[i].x*scaleTony + face_rect[i].width*scaleTony, face_rect[i].y*scaleTony + face_rect[i].height*scaleTony), cv::Scalar(0, 255, 0), 2);
 		  dlib::rectangle r((long)face_rect[i].x*scaleTony, (long)face_rect[i].y*scaleTony, (long)(face_rect[i].x*scaleTony + face_rect[i].width*scaleTony), (long)(face_rect[i].y*scaleTony + face_rect[i].height*scaleTony));
 
-		  printf("face_rect[i].x*scaleTony = %f\n",face_rect[i].x*scaleTony);
+		  //printf("face_rect[i].x*scaleTony = %f\n",face_rect[i].x*scaleTony);
 
 		  // Find the pose of each face.
 		  shapes.push_back(pose_model(cimg, r));
@@ -1120,11 +1037,13 @@ if(classLabels[results[0].first]== c1 || c2 )
 		//	cv::rectangle(temp, cv::Point(face_rect[max_index].x, face_rect[max_index].y), cv::Point(face_rect[max_index].x + face_rect[max_index].width, face_rect[max_index].y + face_rect[max_index].height), cv::Scalar(0, 255, 0), 2);
 
 
-
+/*
 		  printf("face_rect[max_index].x*scaleTony = %f\n",face_rect[max_index].x*scaleTony);
 		  printf("face_rect[max_index].y*scaleTony = %f\n",face_rect[max_index].y*scaleTony);
 		  printf("face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony = %f\n",face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony);
 		  printf("face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony = %f\n",face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony);
+
+*/
 /*
 
 
@@ -1163,13 +1082,13 @@ if(classLabels[results[0].first]== c1 || c2 )
 
 */
 
-
+/*
 		  printf("face_rect[max_index].x*scaleTony = %f\n",face_rect[max_index].x*scaleTony);
 		  printf("face_rect[max_index].y*scaleTony = %f\n",face_rect[max_index].y*scaleTony);
 		  printf("face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony = %f\n",face_rect[max_index].x*scaleTony + face_rect[max_index].width*scaleTony);
 		  printf("face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony = %f\n",face_rect[max_index].y*scaleTony + face_rect[max_index].height*scaleTony);
 
-
+*/
 
 
 		  }
@@ -1248,7 +1167,7 @@ Version9: 定义显示DMS条件
 
 			#if 1
 
-			if(mouthMar > 0.5){
+			if((mouthMar > 0.6) && ( results[0].second >0.2)){   // 20200603   &&  std::to_string(results[0].second) >0.2
 
 
 				cv::Mat frame_face(temp.cols/4,temp.rows/2,CV_8UC3);
