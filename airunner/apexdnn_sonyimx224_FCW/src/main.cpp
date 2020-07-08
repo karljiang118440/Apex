@@ -56,11 +56,13 @@ inline static void stopwatch(bool start, std::string verb = "")
   }
 }
 
-
-
-
-
 #endif
+
+
+
+
+#define  video_airunner 1 // 定义 FCW 对视频进行检测
+
 
 
 
@@ -77,6 +79,7 @@ inline static void stopwatch(bool start, std::string verb = "")
 #include "frame_output_v234fb.h"
 #define CHNL_CNT io::IO_DATA_CH3
 #endif // else from #ifdef __STANDALONE__
+
 
 #include "sdi.hpp"
 #include "mipi_simple_c.h"
@@ -437,26 +440,51 @@ static int32_t Run(AppContext& arContext)
 
 
 // 使用标准模型
-/*
+
+
+
+#if 1
+
 const std::string& aMssdGraph = "data/airunner/model/coco/ssdlite_mb2_stand_part_bn_quant_final.pb";
 
-*/
 
-
-const std::string& aMssdGraph = "data/airunner/model/kitti/ssdlite_mb2_kitti_part_bn_quant_final.pb";
 const std::string& aImageFile = "data/airunner/test_object_detection.jpg";
 const std::string& aSlimLabelsFile = "data/airunner/object_detection/mscoco_labels.txt";
 const std::string& target = "APEX";
 
-const std::string& aLabels = "data/airunner/object_detection/kitti_label_map.txt";
+const std::string& aLabels = "data/airunner/object_detection/mscoco_labels.txt";
 
 
 
 
 cv::Mat   camera_mat;
 
+int numClasses=91;
+int anchorGenVer=2;
+
+
+#endif 
+
+
+#if 0 // 使用 kiiti 数据集
+
+const std::string& aMssdGraph = "data/airunner/model/kitti/ssdlite_mb2_kitti_part_bn_quant_final.pb";
+const std::string& aImageFile = "data/airunner/test_object_detection.jpg";
+const std::string& aSlimLabelsFile = "data/airunner/object_detection/kitti_label_map.txt";
+const std::string& target = "APEX";
+const std::string& aLabels = "data/airunner/object_detection/kitti_label_map.txt";
+
+cv::Mat   camera_mat;
+
 int numClasses=3;
 int anchorGenVer=2;
+
+
+
+
+
+#endif 
+
 
 
 
@@ -564,10 +592,6 @@ int anchorGenVer=2;
 
   std::cout << "Detecting objects for: " << imagePath << std::endl;
 
-//printf("mark1 \n");
-
-
-
 #endif 
 
 
@@ -576,6 +600,24 @@ int anchorGenVer=2;
 
   SDI_Frame lFrame;
   // *** grabbing/processing loop ***
+
+
+
+#ifdef video_airunner 
+   cv::VideoCapture capture; /* open video */
+	 capture.open("./data/object_detection/university_traffic.avi");
+   
+	 if(!capture.isOpened()) // if not success, exit program
+	 {
+	   printf("Cannot open the video file: \n");
+	  //return -1;
+	 } // if video open failed
+   
+   //cv::Mat outputImage = cv::Mat::zeros(cv::Size(1280, 720), CV_8UC3);
+
+
+
+#endif 
 
 
   for(;;)
@@ -598,7 +640,7 @@ int anchorGenVer=2;
 
 cv::Mat camera_mat = lFrame.mUMat.getMat(vsdk::ACCESS_RW | OAL_USAGE_CACHED);
 
-cv::flip(camera_mat,camera_mat,0);
+cv::flip(camera_mat,camera_mat,0); // 画面翻转
 
 
 
@@ -606,7 +648,34 @@ cv::flip(camera_mat,camera_mat,0);
 
 
 
-resizeBilinearAndNormalize(camera_mat, lApexNetInput, true, {128}, 1.0f);
+  #ifndef video_airunner
+
+    printf("mark2 \n");
+
+ 
+
+     resizeBilinearAndNormalize(camera_mat, lApexNetInput, true, {128}, 1.0f);
+
+
+  #else 
+
+
+
+    cv::Mat outputImage;
+    capture >>  outputImage;
+
+   // printf("rows = %d ,cols = %d \n" , (outputImage.rows,outputImage.cols));
+   // cv::imwrite("outputImage.jpg",outputImage);
+
+  //printf("mark667 \n");
+
+        resizeBilinearAndNormalize(outputImage, lApexNetInput, true, {128}, 1.0f);
+
+  #endif 
+
+
+
+
 
   lApexNetInput->Flush();
   output[0]->Invalidate();
@@ -689,9 +758,24 @@ resizeBilinearAndNormalize(camera_mat, lApexNetInput, true, {128}, 1.0f);
   std::vector<BoundingBox> bboxes = multiclassNonMaxSuppression(boxes, scorePredictorList, 1, 0.35,
                                                                 0.6, 100, 100, NULL, false, true);
 
+
+
+  #ifndef video_airunner
+
+
   //cv::Mat outImage = *outputImage;
 
-  cv::Mat outImage = camera_mat;
+    cv::Mat outImage = camera_mat;
+
+  #else 
+
+    cv::Mat outImage = outputImage;
+
+  #endif
+
+
+
+
 
 
   std::string imageResult = imagePath + ", " + std::to_string(bboxes.size()) + "\n";
@@ -727,21 +811,47 @@ resizeBilinearAndNormalize(camera_mat, lApexNetInput, true, {128}, 1.0f);
     results.push_back(std::pair<int, float>(a.classNo, a.score));
   }
 
+#if video_airunner
+
+
+//cv::imwrite("outputImage.jpg",outImage);
+
+ // vsdk::Mat lframe1 = outImage.getMat(OAL_USAGE_CACHED | ACCESS_READ);
+ // vsdk::UMat lframe_umat = vsdk::UMat(720, 1280, VSDK_CV_8UC3);
+
+ cv::resize(outImage,outImage,cv::Size(1280,720));
+
+ vsdk::UMat lframe_umat = outImage.getUMat(cv::ACCESS_RW);
+
+/*
+   io::FrameOutputV234Fb output(1280, 720, io::IO_DATA_DEPTH_08, CHNL_CNT);
+
+  
+    // Output buffer (screen size) and it's mapped version (using cv mat in order to have copyTo functions)
+    vsdk::UMat output_umat = vsdk::UMat(720, 1280, VSDK_CV_8UC3);
+    {
+      cv::Mat output_mat = output_umat.getMat(vsdk::ACCESS_WRITE | OAL_USAGE_CACHED);
+      memset(output_mat.data, 0, 720 * 1280 * 3);
+      outImage.copyTo(output_mat);
+      //cv::imwrite("outputImage_1.jpg",output_mat);
+    }
+
+    output.PutFrame(output_umat);
+
+    */
+
+
+
+
+#endif 
+
 
   io_FrameOutput_t lFrameOutput;
 
-//printf("mark737 \n");
+  io::FrameOutputV234Fb output(1280, 720, io::IO_DATA_DEPTH_08, CHNL_CNT);
 
   //lFrameOutput.Init(1280, 1080, io::IO_DATA_DEPTH_08,io::IO_DATA_CH3);
   lFrameOutput.Init(1280, 720, io::IO_DATA_DEPTH_08,io::IO_DATA_CH3);
-
-
- //printf("mark743 \n");   
-
- ////printf("outImage.size= (%d , %d ),(outImage.rows , outImage.cols) \n")  ;              
-
- // DisplayImageOD(lFrameOutput, outImage, classLabels, results);
-  //sleep(5);
 
 
   std::cout << imageResult << std::endl;
@@ -770,15 +880,8 @@ resizeBilinearAndNormalize(camera_mat, lApexNetInput, true, {128}, 1.0f);
 #endif
 
 
- 
 
-
-
-
-
-
-
-
+/*
 #if 0
 
 //添加计数功能，100帧 抓取一次画面
@@ -823,27 +926,32 @@ else
 {
   lDcuOutput.PutFrame(lFrame.mUMat);
 
-  //printf("Mark3 \n");
 }
+
+
+#endif 
+*/
+
+
+#ifndef video_airunner
+
+
+        lDcuOutput.PutFrame(lFrame.mUMat);
+#else
+
+
+   // lDcuOutput.PutFrame(lframe_umat);
+    //output.PutFrame(lframe_umat);
+
+    //cv::imwrite("outImage_944.jpg",(cv::UMat)lframe_umat);
+
+   lDcuOutput.PutFrame(outImage.data, false);
 
 
 #endif 
 
 
-lDcuOutput.PutFrame(lFrame.mUMat);
 
-
-
-
-
-
-
-
-
-
-
-
-  
 
     if(arContext.mpGrabber->FramePush(lFrame) != LIB_SUCCESS)
     {
