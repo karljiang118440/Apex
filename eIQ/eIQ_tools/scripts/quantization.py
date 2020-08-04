@@ -1,7 +1,7 @@
 #from quantize import Quantize
 from eiq_auto import make_quantize
-quant = make_quantize('frozen_inference_graph.pb')
-quant.annotate_minmax('frozen_inference_graph.pb')
+quant = make_quantize('./frozen_inference_graph.pb')
+quant.annotate_minmax('./test.jpg')
 quant.export_model('.')
 
 
