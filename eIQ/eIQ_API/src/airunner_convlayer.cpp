@@ -310,6 +310,27 @@ static int conv2d_net_construction (int                     aBatch,
 
 
 
+     TensorValPrint_int8(*lNetInputTensor.get());
+
+
+  std::unique_ptr<Tensor> lNetInputTensor_cpy = nullptr;
+
+
+    lNetInputTensor_cpy = std::unique_ptr<Tensor>(Tensor::Create<>(
+      "NET_INPUT_TENSOR", DataType_t::SIGNED_8BIT,
+      TensorShape<TensorFormat_t::NHWC>{aBatch, lInputHeight, lInputWidth, lInputChannel}));
+
+
+    lNetInputTensor_cpy->CopyDataFrom(*lNetInputTensor.get());
+
+    TensorValPrint_int8(*lNetInputTensor.get());
+
+    TensorValPrint(*lNetInputTensor_cpy.get());
+
+   // lNetInputTensor_cpy
+
+
+
 
 
 
@@ -373,24 +394,6 @@ static int depthconv_net_construction(int              aBatch,
       lNetInputTensor->Allocate(Allocation_t::OAL);
       RandomizeTensor(*lNetInputTensor.get(), 0);
 
-      /*
-      1.对 InputTensor 进行赋值
-      2.显示出相关的数值
-
-      */
-      //Fixedval2Tensor(*lNetInputTensor.get(), 0);
-
-      //TensorValPrint(*lNetInputTensor.get()); 
-
-      TensorValPrint_int8(*lNetInputTensor.get());
-
-
-
-      TensorValPrint_int8(*lCpuNetInputTensor.get());
-
-
-      printf("line465 \n");
-        //TensorValPrint_int8(*lApexNetOutput.get());
 
 
       lNetInputTensor->SetQuantParams({QuantInfo(-6, 6)});
