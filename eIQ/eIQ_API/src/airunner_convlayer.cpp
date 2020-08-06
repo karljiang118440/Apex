@@ -209,6 +209,11 @@ static int conv2d_net_construction (int                     aBatch,
       NodeFactory<ConvConfig>::Create(ConvConfig{{akH, akW}, {aStrideH, aStrideW}, {1, 1},  aGroup, {aPadding}, {aActivation}}),
       {lNetInputTensor.get(), lWeightTensor.get(), lBiasTensor.get()}, {outputTensor});
  
+
+
+
+
+
   // Run APEX
 #ifdef __aarch64__
   lStatus = lGraph->SetTargetHint(TargetType::APEX());
@@ -308,26 +313,65 @@ static int conv2d_net_construction (int                     aBatch,
   }
 
 
+/*
+2020.08.05
 
+copydatafrom api
 
-     TensorValPrint_int8(*lNetInputTensor.get());
+能够对 tensor 中的数据进行复制
 
+*/
 
-  std::unique_ptr<Tensor> lNetInputTensor_cpy = nullptr;
-
+//*********
+   TensorValPrint_int8(*lNetInputTensor.get());
+   std::unique_ptr<Tensor> lNetInputTensor_cpy = nullptr;
 
     lNetInputTensor_cpy = std::unique_ptr<Tensor>(Tensor::Create<>(
       "NET_INPUT_TENSOR", DataType_t::SIGNED_8BIT,
       TensorShape<TensorFormat_t::NHWC>{aBatch, lInputHeight, lInputWidth, lInputChannel}));
 
+    lNetInputTensor_cpy->CopyDataFrom(*lNetInputTensor.get());
+
+    TensorValPrint(*lNetInputTensor_cpy.get());
+//*************
+//*************
+
+
+
+/*
+2020.08.05
+
+copudatafrom api
+
+能够对 tensor 中的数据进行复制
+
+*/
+
+//*********
+   TensorValPrint_int8(*lNetInputTensor.get());
+   //std::unique_ptr<Tensor> lNetInputTensor_cpy = nullptr;
+
+    lNetInputTensor_cpy = std::unique_ptr<Tensor>(Tensor::Create<>(
+      "NET_INPUT_TENSOR", DataType_t::SIGNED_8BIT,
+      TensorShape<TensorFormat_t::NHWC>{aBatch, lInputHeight, lInputWidth, lInputChannel}));
 
     lNetInputTensor_cpy->CopyDataFrom(*lNetInputTensor.get());
 
-    TensorValPrint_int8(*lNetInputTensor.get());
-
     TensorValPrint(*lNetInputTensor_cpy.get());
+//*************
+//*************
 
-   // lNetInputTensor_cpy
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -493,9 +537,6 @@ static int depthconv_net_construction(int              aBatch,
         outputTensor->Invalidate();
         lStatus = lGraph->Run();
         
-        //TensorValPrint(*outputTensor);
-
-       //TensorValPrint_int8(*outputTensor);
 
         if(TensorEqual(lApexNetOutput, *outputTensor))
         {
