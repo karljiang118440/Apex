@@ -276,6 +276,8 @@ static int conv2d_net_construction (int                     aBatch,
 
 
 
+
+
     // Run reference for comparison
     auto lApexNetOutput = std::unique_ptr<Tensor>(new Tensor("APEX_OUTPUT"));
     lApexNetOutput->Configure(outputTensor->Format(), outputTensor->DataType(),
@@ -373,25 +375,10 @@ copudatafrom api
     lNetInputTensor_cpy->CopyDataFrom(*lNetInputTensor.get());
 
     TensorValPrint(*lNetInputTensor_cpy.get());
+
+    printf(" 379 \n");
 //*************
 //*************
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 //end:
   return lStatus == Status_t::SUCCESS ? 0 : 1;
@@ -419,20 +406,18 @@ copudatafrom api
 
 
 
-
-static int concat (int                     aBatch,
-                                    int                     akW,
-                                    int                     akH,
-                                    int                     aWidth,
-                                    int                     aHeight,
-                                    int                     aStrideW,
-                                    int                     aStrideH,
-                                    int                     aInputChannels,
-                                    int                     aOutputChannels,
-                                    int                     aGroup,
-                                    PaddingConfig           aPadding,
-                                    ActivationConfig        aActivation,
-                                    int                     aFastProf )
+/* depth wise 3x3 convolution */
+static int concat_node_construction(int              aBatch,
+                                      int              akW,
+                                      int              akH,
+                                      int              aWidth,
+                                      int              aHeight,
+                                      int              aStrideW,
+                                      int              aStrideH,
+                                      int              aInputChannels,
+                                      PaddingConfig    aPadding,
+                                      ActivationConfig aActivation,
+                                      int              aFastProf)
 {
   /* INPUT IMAGE */
   int lInputWidth  = aWidth;
@@ -440,13 +425,18 @@ static int concat (int                     aBatch,
   int lInputChannel  = aInputChannels;
 
   /* OUTPUT IMAGE */
-  int lOutputChannel = aOutputChannels;
+  int lOutputChannel = aInputChannels;
+
+  /* KERNEL */
+  int lFilterWidth  = 3;
+  int lFilterHeight = 3;
 
   Status_t lStatus = Status_t::SUCCESS;
 
+
   printf("\n");
-  printf("Input  (iN, iW, iH, iC       ): %4d %4d %4d %4d    \n", aBatch, lInputWidth, lInputHeight, lInputChannel);
-  printf("Conv   (kW, kH, sW, sH, Group): %4d %4d %4d %4d %4d\n", akW, akH, aStrideW, aStrideH, aGroup );
+  printf("Input     (iN, iW, iH, iC): %4d %4d %4d %4d\n", aBatch, lInputWidth, lInputHeight, lInputChannel);
+  printf("DEPTHConv (kW, kH, sW, sH): %4d %4d %4d %4d\n", akW, akH, aStrideW, aStrideH );
   if(aActivation.mType == ActivationFunction_t::NONE)
     printf("Testing aActivation.mType: NONE\n");
   if(aActivation.mType == ActivationFunction_t::RELU)
@@ -459,321 +449,139 @@ static int concat (int                     aBatch,
   lTargets[TargetType::CPU_REF()] = CreateCpuRefTarget();
 #ifdef __aarch64__
   lTargets[TargetType::APEX()] = CreateApexTarget();
-#endif
+#endif  
+
   auto lWorkspace = std::unique_ptr<Workspace>(new Workspace(std::move(lTargets)));
-
-  // Create Input tensor, fill with random data
-  std::unique_ptr<Tensor> lNetInputTensor = nullptr;
-  if(aInputChannels <= 3)
+  
   {
-    lNetInputTensor = std::unique_ptr<Tensor>(Tensor::Create<>(
-      "NET_INPUT_TENSOR", DataType_t::SIGNED_8BIT,
-      TensorShape<TensorFormat_t::NHWC>{aBatch, lInputHeight, lInputWidth, lInputChannel}));
-  }
-  else 
-  {
-    lNetInputTensor = std::unique_ptr<Tensor>(Tensor::Create<>(
-      "NET_INPUT_TENSOR", DataType_t::SIGNED_8BIT,
-      TensorShape<TensorFormat_t::NHWCE0>{aBatch, lInputHeight, lInputWidth, lInputChannel},
-      TensorLayout<TensorFormat_t::NHWCE0>(TensorDim_t::WIDTH, 2)));
-  }
-
-
-std::unique_ptr<Tensor> lNetInputTensor1 = nullptr;
-
-    lNetInputTensor1 = std::unique_ptr<Tensor>(Tensor::Create<>(
-      "NET_INPUT_TENSOR", DataType_t::SIGNED_8BIT,
-      TensorShape<TensorFormat_t::NHWC>{1, 3, 3, 1}));
+      // Create Input tensor, fill with random data
+      auto lNetInputTensor = std::unique_ptr<Tensor>(Tensor::Create<>(
+          "NET_INPUT_TENSOR", DataType_t::SIGNED_8BIT,
+          TensorShape<TensorFormat_t::NHWCE0>{aBatch, lInputHeight, lInputWidth, lInputChannel},
+          TensorLayout<TensorFormat_t::NHWCE0>(TensorDim_t::WIDTH, 2)));
+      lNetInputTensor->Allocate(Allocation_t::OAL);
+      RandomizeTensor(*lNetInputTensor.get(), 0);
 
 
 
 
+      lNetInputTensor->SetQuantParams({QuantInfo(-6, 6)});
+
+      // Create Weight tensor, fill with random data
+      auto lWeightTensor = std::unique_ptr<Tensor>(Tensor::Create<>(
+          "WEIGHT_TENSOR", DataType_t::SIGNED_8BIT,
+          TensorShape<TensorFormat_t::OIHW>{1, lInputChannel, lFilterHeight, lFilterWidth}));
+      lWeightTensor->Allocate(Allocation_t::HEAP);
+      RandomizeTensor(*lWeightTensor.get(), 0);
+      lWeightTensor->SetQuantParams({QuantInfo(-0.3, 0.8)});
+
+      // Create bias tensor, fill with random data
+      auto lBiasTensor = std::unique_ptr<Tensor>(Tensor::Create<>(
+          "BIAS_TENSOR", DataType_t::SIGNED_32BIT,
+          TensorShape<TensorFormat_t::OIHW>{lOutputChannel, 1, 1, 1}));
+      lBiasTensor->Allocate(Allocation_t::HEAP);
+      RandomizeTensor(*lBiasTensor.get(), 0);
+      lBiasTensor->SetQuantParams({QuantInfo(-0.3, 0.8)});
+
+      // Build up the graph
+      auto lGraph = std::unique_ptr<Graph>(new Graph(*lWorkspace));
+
+      // Create output tensor
+      auto outputTensor = lGraph->AddTensor("NET_OUTPUT_TENSOR");
+      outputTensor->SetQuantParams({QuantInfo(0, 8.0)});
+
+      lGraph->AddNode(
+             NodeFactory<ConcatConfig>::Create(
+                ConcatConfig{0}),
+              {lNetInputTensor.get(), lNetInputTensor.get()}, {outputTensor});
+     
+      // Run APEX
 #ifdef __aarch64__
-  lNetInputTensor->Allocate(Allocation_t::OAL);
-
-  lNetInputTensor1->Allocate(Allocation_t::OAL);
-
+      lStatus = lGraph->SetTargetHint(TargetType::APEX());
 #else
-  lNetInputTensor->Allocate(Allocation_t::HEAP);
-#endif  
-  lNetInputTensor->SetQuantParams({QuantInfo(-6, 6)});
-  RandomizeTensor(*lNetInputTensor.get(), 0);
+      lStatus = lGraph->SetTargetHint(TargetType::CPU_REF());
+#endif 
 
+      if(Status_t::SUCCESS != lStatus)
+      {
+        std::cout << "Set APEX target failed" << std::endl;
+        goto end;
+      }
+      lStatus = lGraph->Prepare();
 
-/* 对 lNetInputTensor 赋初值 --2020.07.23
+      if(Status_t::SUCCESS != lStatus)
+      {
+        std::cout << "APEX Prepare() failed" << std::endl;
+        goto end;
+      }
 
-*/
-  lNetInputTensor1->SetQuantParams({QuantInfo(-6, 6)});
-  Fixedval2Tensor(*lNetInputTensor1.get(), 1);
+      lNetInputTensor->Flush();
+      outputTensor->Invalidate();
 
+      lStatus = lGraph->Run();
+      if(Status_t::SUCCESS != lStatus)
+      {
+        std::cout << "APEX Run() failed " << int(lStatus) << std::endl;
+        goto end;
+      }
 
+      if(!aFastProf)
+      {
+        // Run reference for comparison
+        Tensor lApexNetOutput("APEX_OUTPUT");
+        lApexNetOutput.Configure(outputTensor->Format(), outputTensor->DataType(),
+                                 outputTensor->Dims(), 
+                                 outputTensor->Layout());
+        lStatus = lApexNetOutput.Allocate(Allocation_t::HEAP);
+        if(Status_t::SUCCESS != lStatus)
+        {
+          std::cout << "APEX output allocation failed" << std::endl;
+          goto end;
+        }
+        
+        outputTensor->Invalidate();
+        lApexNetOutput.CopyDataFrom(*outputTensor);
+        memset(outputTensor->DataPtr(), 0, outputTensor->Size());
 
-  auto lCpuNetInputTensor = std::unique_ptr<Tensor>(Tensor::Create<>(
-      "NET_INPUT_TENSOR_COPY", DataType_t::SIGNED_8BIT,
-      TensorShape<TensorFormat_t::NHWC>{aBatch, lInputHeight, lInputWidth, lInputChannel}));
-  lCpuNetInputTensor->Allocate(Allocation_t::HEAP);
-  lCpuNetInputTensor->SetQuantParams({QuantInfo(-6, 6)});
-  lCpuNetInputTensor->CopyDataFrom(*lNetInputTensor.get());
+        lStatus = lGraph->SetTargetHint(TargetType::CPU_REF());
+        if(Status_t::SUCCESS != lStatus)
+        {
+          std::cout << "Could not set target to REF" << std::endl;
+          goto end;
+        }
+        lStatus = lGraph->Prepare();
+        if(Status_t::SUCCESS != lStatus)
+        {
+          std::cout << "Prepare failed " << int(lGraph->State()) << std::endl;
+          goto end;
+        }
 
+        lNetInputTensor->Flush();
+        outputTensor->Invalidate();
+        lStatus = lGraph->Run();
 
-  /* 拷贝数据到 cpu 中 -- 2020.07.23
-  
-  */
-  auto lCpuNetInputTensor1 = std::unique_ptr<Tensor>(Tensor::Create<>(
-      "NET_INPUT_TENSOR_COPY", DataType_t::SIGNED_8BIT,
-      TensorShape<TensorFormat_t::NHWC>{1, 3, 3, 1}));
-  lCpuNetInputTensor1->Allocate(Allocation_t::HEAP);
-  lCpuNetInputTensor1->SetQuantParams({QuantInfo(-6, 6)});
-  lCpuNetInputTensor1->CopyDataFrom(*lNetInputTensor1.get());
-
-  lCpuNetInputTensor1->CopyDataFrom(*lNetInputTensor1.get());
-
-
-  // Create Weight tensor, fill with random data
-  auto lWeightTensor = std::unique_ptr<Tensor>(
-      Tensor::Create<>("WEIGHT_TENSOR", DataType_t::SIGNED_8BIT,
-                       TensorShape<TensorFormat_t::OIHW>{lOutputChannel, lInputChannel/aGroup, akH, akW}));
-  lWeightTensor->Allocate(Allocation_t::HEAP);
-  RandomizeTensor(*lWeightTensor.get(), 0);
-  lWeightTensor->SetQuantParams({QuantInfo(-0.3, 0.8)});
-
-
-/* 对 weight 的参数进行设置 -- 2020.07.23
-
-*/
-
-
-  auto lWeightTensor1 = std::unique_ptr<Tensor>(
-      Tensor::Create<>("WEIGHT_TENSOR", DataType_t::SIGNED_8BIT,
-                       TensorShape<TensorFormat_t::OIHW>{3, 3, 1, 1}));
-  lWeightTensor1->Allocate(Allocation_t::HEAP);
-  Fixedval2Tensor(*lWeightTensor1.get(), 1);
-  lWeightTensor1->SetQuantParams({QuantInfo(-0.3, 0.8)});
-
-
-
-
-
-  // Create bias tensor, fill with random data
-  auto lBiasTensor = std::unique_ptr<Tensor>(Tensor::Create<>(
-      "BIAS_TENSOR", DataType_t::SIGNED_32BIT,
-      TensorShape<TensorFormat_t::OIHW>{lOutputChannel, 1, 1, 1}));
-  lBiasTensor->Allocate(Allocation_t::HEAP);
-  RandomizeTensor(*lBiasTensor.get(), 0);
-  lBiasTensor->SetQuantParams({QuantInfo(-0.3, 0.8)});
-
-
-
-/*   // Create bias tensor, fill with random data
-
-*/
-  auto lBiasTensor1 = std::unique_ptr<Tensor>(Tensor::Create<>(
-      "BIAS_TENSOR", DataType_t::SIGNED_32BIT,
-      TensorShape<TensorFormat_t::OIHW>{lOutputChannel, 1, 1, 1}));
-  lBiasTensor1->Allocate(Allocation_t::HEAP);
-  Fixedval2Tensor(*lBiasTensor1.get(), 0);
-  lBiasTensor1->SetQuantParams({QuantInfo(-0.3, 0.8)});
-
-
-  // Build up the graph
-  auto lGraph = std::unique_ptr<Graph>(new Graph(*lWorkspace));
-
-  // Create output tensor
-  auto outputTensor = lGraph->AddTensor("NET_OUTPUT_TENSOR");
-  outputTensor->SetQuantParams({QuantInfo(-106, 106)});
-
-/*  // Create output tensor -- 2020.07.23
-
-
-*/
-
-  auto outputTensor1 = lGraph->AddTensor("NET_OUTPUT_TENSOR");
-  outputTensor1->SetQuantParams({QuantInfo(-106, 106)});
-
-
-
-
-  lGraph->AddNode(
-      NodeFactory<ConvConfig>::Create(ConvConfig{{akH, akW}, {aStrideH, aStrideW}, {1, 1},  aGroup, {aPadding}, {aActivation}}),
-      {lNetInputTensor.get(), lWeightTensor.get(), lBiasTensor.get()}, {outputTensor});
- 
-
-  lGraph->AddNode(
-      NodeFactory<ConvConfig>::Create(ConvConfig{{akH, akW}, {aStrideH, aStrideW}, {1, 1},  aGroup, {aPadding}, {aActivation}}),
-      {lNetInputTensor1.get(), lWeightTensor1.get(), lBiasTensor1.get()}, {outputTensor1});
- 
-
-
-  // Run APEX
-#ifdef __aarch64__
-  lStatus = lGraph->SetTargetHint(TargetType::APEX());
-#else
-  lStatus = lGraph->SetTargetHint(TargetType::CPU_REF());
-#endif  
-  
-  if(Status_t::SUCCESS != lStatus)
-  {
-    std::cout << "Set target failed" << std::endl;
-    return -1;
-  }
-  lStatus = lGraph->Prepare();
-
-  if(Status_t::SUCCESS != lStatus)
-  {
-    std::cout << "APEX Prepare() failed" << std::endl;
-    return -1;
+        if(TensorEqual(lApexNetOutput, *outputTensor))
+        {
+          std::cout << "**************\n";
+          std::cout << "TEST SUCCESS\n";
+          std::cout << "**************" << std::endl;
+        }
+        else
+        {
+          std::cout << "**************\n";
+          std::cout << "TEST FAILED\n";
+          std::cout << "**************" << std::endl;
+          lStatus        = Status_t::INTERNAL_ERROR;
+        }
+      }
   }
 
-  lNetInputTensor->Flush();
-  outputTensor->Invalidate();
-
-  /*将tensor 读取，传入内存中 
-  
-  */
-  lNetInputTensor1->Flush();
-  outputTensor1->Invalidate();
-
-  lStatus = lGraph->Run();
-  if(Status_t::SUCCESS != lStatus)
-  {
-    std::cout << "APEX Run() failed " << int(lStatus) << std::endl;
-    return -1;
-  }
-
-
-    /* 打印输出最后的 tensor 结果
-    
-    */
-  printf("336 \n");
-    //TensorValPrint(*lNetInputTensor1.get());
-    //TensorValPrint(*outputTensor1);
-
-
-
-  if(!aFastProf)
-  {
-    lNetInputTensor->Configure(TensorFormat_t::NHWC, lNetInputTensor->DataType(), lNetInputTensor->Dims(),
-                            lNetInputTensor->Layout());
-
-    lStatus = lNetInputTensor->Allocate(Allocation_t::HEAP);
-
-  /*对 lNetInputTensor 进行配置
-  
-  */
-
-    lNetInputTensor1->Configure(TensorFormat_t::NHWC, lNetInputTensor1->DataType(), lNetInputTensor1->Dims(),
-                            lNetInputTensor1->Layout());
-
-    lStatus = lNetInputTensor1->Allocate(Allocation_t::HEAP);
-
-
-    if(Status_t::SUCCESS != lStatus)
-    {
-      std::cout << "Tensor allocation failed" << std::endl;
-      return -1;
-    }
-
-    lNetInputTensor->CopyDataFrom(*lCpuNetInputTensor.get());
-
-    /* lNetInputTensor1 抓取数据 -- 220.07.23
-    
-    */
-    lNetInputTensor1->CopyDataFrom(*lCpuNetInputTensor1.get());
-
-
-
-    // Run reference for comparison
-    auto lApexNetOutput = std::unique_ptr<Tensor>(new Tensor("APEX_OUTPUT"));
-    lApexNetOutput->Configure(outputTensor->Format(), outputTensor->DataType(),
-                              outputTensor->Dims(), outputTensor->Layout());
-    lStatus = lApexNetOutput->Allocate(Allocation_t::HEAP);
-    if(Status_t::SUCCESS != lStatus)
-    {
-      std::cout << "APEX output allocation failed" << std::endl;
-      return -1;
-    }
-
-    auto lApexNetOutput1 = std::unique_ptr<Tensor>(new Tensor("APEX_OUTPUT"));
-    lApexNetOutput1->Configure(outputTensor1->Format(), outputTensor1->DataType(),
-                              outputTensor1->Dims(), outputTensor1->Layout());
-    lStatus = lApexNetOutput1->Allocate(Allocation_t::HEAP);
-    if(Status_t::SUCCESS != lStatus)
-    {
-      std::cout << "APEX output allocation failed" << std::endl;
-      return -1;
-    }
-
-
-    outputTensor->Invalidate();
-    lApexNetOutput->CopyDataFrom(*outputTensor);
-    memset(outputTensor->DataPtr(), 0, outputTensor->Size());
-
-
-    outputTensor1->Invalidate();
-    lApexNetOutput1->CopyDataFrom(*outputTensor1);
-    memset(outputTensor1->DataPtr(), 0, outputTensor1->Size());
-
-
-
-    lStatus = lGraph->SetTargetHint(TargetType::CPU_REF());
-    if(Status_t::SUCCESS != lStatus)
-    {
-      std::cout << "Could not set target to REF" << std::endl;
-      return -1;
-    }
-    lStatus = lGraph->Prepare();
-    if(Status_t::SUCCESS != lStatus)
-    {
-      std::cout << "Prepare failed " << int(lGraph->State()) << std::endl;
-      return -1;
-    }
-
-    printf("412 \n");
-    TensorValPrint(*lNetInputTensor1.get());
-    TensorValPrint(*outputTensor1);
-    printf("423 \n");
-
-    lNetInputTensor->Flush();
-    outputTensor->Invalidate();
-
-
-    lNetInputTensor1->Flush();
-    outputTensor1->Invalidate();
-
-
-    lStatus = lGraph->Run();
-
-
-    if(TensorEqual(*lApexNetOutput.get(), *outputTensor))
-    {
-      std::cout << "**************\n";
-      std::cout << "TEST SUCCESS\n";
-      std::cout << "**************" << std::endl;
-      lStatus        = Status_t::SUCCESS;
-    }
-    else
-    {
-      std::cout << "**************\n";
-      std::cout << "TEST FAILED\n";
-      std::cout << "**************" << std::endl;
-      lStatus        = Status_t::INTERNAL_ERROR;
-    }
-  }
-
-
-
-    printf("422 \n");
-    TensorValPrint(*lNetInputTensor1.get());
-    printf("456 \n");
-
-    TensorValPrint(*outputTensor1);
-    printf("457 \n");
-
-
-    
-//end:
+end:
   return lStatus == Status_t::SUCCESS ? 0 : 1;
 }
+
+
+
 
 
 
@@ -1222,8 +1030,8 @@ static int CrossCorr_net_construction(int              aBatch,
       outputTensor->SetQuantParams({QuantInfo(0, 8.0)});
 
       lGraph->AddNode(
-             NodeFactory<DepthConvConfig>::Create(
-                DepthConvConfig{{akH, akW}, {aStrideH, aStrideW}, {1, 1}, std::move(aPadding), std::move(aActivation)}),
+             NodeFactory<CrossCorrConfig>::Create(
+                CrossCorrConfig{{akH, akW}, {aStrideH, aStrideW}, {1, 1}, std::move(aPadding), std::move(aActivation)}),
               {lNetInputTensor.get(), lWeightTensor.get(), lBiasTensor.get()}, {outputTensor});
      
       // Run APEX
@@ -1332,6 +1140,12 @@ int conv_layer_test(int checkRef)
  
   lRetVal += deconv2d_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
  
+  //lRetVal += CrossCorr_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
+ 
+  lRetVal += concat_node_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
+ 
+
+
 printf("1328 \n");
      
 
