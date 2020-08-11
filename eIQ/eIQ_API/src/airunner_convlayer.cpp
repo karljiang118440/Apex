@@ -412,7 +412,14 @@ copudatafrom api
 
 
 
-/**/
+/*
+
+
+*/
+
+
+
+
 static int concat (int                     aBatch,
                                     int                     akW,
                                     int                     akH,
@@ -1323,6 +1330,11 @@ int conv_layer_test(int checkRef)
  
   lRetVal += depthconv_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
  
+  lRetVal += deconv2d_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
+ 
+printf("1328 \n");
+     
+
 
 
   if(lRetVal == 0)
@@ -1342,91 +1354,4 @@ int conv_layer_test(int checkRef)
   return lRetVal;
 }
 
-#endif 
-
-#if 0
-int conv_layer_test(int checkRef)
-{
-  int lRetVal = 0;
-
-  std::cout << std::endl;
-  std::cout << "////////////////////////////////////////////////////\n";
-  std::cout << "//////////// conv_layer_test /////////////\n";
-  std::cout << "////////////////////////////////////////////////////" << std::endl;
-
-  /* aBatch, akW, akH, aWidth, aHeight, aStrideW, aStrideH, aInputChannels, aOutputChannels, aGroup, aPadding, aActivation,      checkRef              */
-  /*  N          K         Input               Stride            IC              OC            group, pad,     activation,      checkResultWithCRef    */
-  //1x1s1
-  lRetVal += conv2d_net_construction(5, 1, 1, 1, 56, 1, 1, 120, 30, 3, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh1_kw1_sh1_sw1_ph0_pw0_g3_#out30_5_120_56_1
-  
-  //3x1s1
-  lRetVal += conv2d_net_construction(1, 3, 1, 32, 18, 1, 1, 320, 160, 1, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh1_kw3_sh1_sw1_ph0_pw1_g1_#out160_1_320_18_32
-  
-  //3x1s2
-  lRetVal += conv2d_net_construction(1, 3, 1, 256, 144, 2, 2, 16, 64, 1, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh1_kw3_sh2_sw2_ph0_pw1_g1_#out64_1_16_144_256
-
-  //1x3s1
-  lRetVal += conv2d_net_construction(30, 1, 3, 3, 72, 1, 1, 64, 128, 1, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh3_kw1_sh1_sw1_ph1_pw0_g1_#out128_30_64_72_3
-  
-  //1x3s2
-  lRetVal += conv2d_net_construction(30, 1, 3, 1, 72, 1, 2, 64, 64, 1, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh3_kw1_sh2_sw1_ph1_pw0_g1_#out64_30_64_72_1
- 
-  //1x3s2
-  lRetVal += conv2d_net_construction(5, 1, 3, 1, 56, 2, 2, 30, 30, 3, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh3_kw1_sh2_sw2_ph1_pw0_g3_#out30_5_30_56_1
-
-  //1x5s1
-  lRetVal += conv2d_net_construction(30, 1, 5, 1, 72, 1, 1, 256, 128, 1, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh5_kw1_sh1_sw1_ph2_pw0_g1_#out128_30_256_72_1
-  
-  //3x5s1
-  lRetVal += conv2d_net_construction(30, 3, 5, 9, 72, 1, 1, 64, 128, 1, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh5_kw3_sh1_sw1_ph2_pw1_g1_#out128_30_64_72_9
-
-  //5x3s1
-  lRetVal += conv2d_net_construction(1, 5, 3, 1024, 576, 2, 2, 3, 64, 1, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh3_kw5_sh2_sw2_ph1_pw2_g1_#out64_1_3_576_1024
-
-  //gemm2d
-  lRetVal += conv2d_net_construction(30, 18, 1, 18, 72, 1, 1, 16, 12, 2, {PaddingScheme_t::VALID, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh1_kw18_sh1_sw1_ph0_pw0_g2_#out12_30_16_72_18
-  
-  //1x18s1
-  lRetVal += conv2d_net_construction(30, 1, 18, 18, 72, 1, 1, 16, 16, 4, {PaddingScheme_t::VALID, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh18_kw1_sh1_sw1_ph0_pw0_g4_#out16_30_16_72_18
-
-  //3x3s2
-  lRetVal += conv2d_net_construction(15, 3, 3, 224, 224, 2, 2, 3, 12, 1, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh3_kw3_sh2_sw2_ph1_pw1_g1_#out12_15_3_224_224
-  
-  //3x3s1
-  lRetVal += conv2d_net_construction(2, 3, 3, 105, 57, 1, 1, 32, 96, 1, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh3_kw3_sh1_sw1_ph1_pw1_g1_#out96_2_32_57_105
- 
-  //3x3s2 grayscale
-  lRetVal += conv2d_net_construction(1, 3, 3, 512, 224, 2, 2, 1, 12, 1, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh3_kw3_sh2_sw2_ph1_pw1_g1_#out12_1_1_224_512
-  
-  //3x3s2 RGB
-  lRetVal += conv2d_net_construction(10, 3, 3, 224, 224, 2, 2, 3, 8,  1, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh3_kw3_sh2_sw2_ph1_pw1_g1_#out8_10_3_224_224
- 
-  //7x7s2 RGB   
-  lRetVal += conv2d_net_construction(1, 7, 7, 800, 448, 2, 2, 3, 32, 1, {PaddingScheme_t::VALID, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh7_kw7_sh2_sw2_ph3_pw3_g1_#out32_1_3_448_800
-
-  //7x7s2 grayscale  
-  lRetVal += conv2d_net_construction(1, 7, 7, 512, 288, 2, 2, 1, 64, 1, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // Conv_kh7_kw7_sh2_sw2_ph3_pw3_g1_#out64_1_1_288_512
-
-  //depthwise 3x3s2
-  lRetVal += depthconv_net_construction(10, 3, 3, 56, 56, 2, 2, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh2_sw2_ph1_pw1_g30_#out30_10_30_56_56
-  
-  //depthwise 3x3s1
-  lRetVal += depthconv_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
- 
-  if(lRetVal == 0)
-  {
-    printf("==================================\n");
-    printf("group conv_layer_test SUCCESS \n");
-    printf("==================================\n");
-    printf("===========================\n");
-  }
-  else
-  {
-    printf("==================================\n");
-    printf("group conv_layer_test FAILED \n");
-    printf("==================================\n");
-  }
-
-  return lRetVal;
-}
 #endif 
