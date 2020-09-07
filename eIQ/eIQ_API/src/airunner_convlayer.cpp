@@ -1032,7 +1032,7 @@ static int CrossCorr_net_construction(int              aBatch,
       lGraph->AddNode(
              NodeFactory<CrossCorrConfig>::Create(
                 CrossCorrConfig{{akH, akW}, {aStrideH, aStrideW}, {1, 1}, std::move(aPadding), std::move(aActivation)}),
-              {lNetInputTensor.get(), lWeightTensor.get(), lBiasTensor.get()}, {outputTensor});
+              {lNetInputTensor.get(), lNetInputTensor.get()}, {outputTensor});
      
       // Run APEX
 #ifdef __aarch64__
@@ -1669,6 +1669,12 @@ end:
 
 
 /* depth wise 3x3 convolution */
+/*
+
+matmul 无法在 apex 中运算实现
+
+
+*/
 static int MatMul_net_construction(int              aBatch,
                                       int              akW,
                                       int              akH,
@@ -1709,10 +1715,12 @@ static int MatMul_net_construction(int              aBatch,
   // Creating a new workspace
   std::map<std::string, std::unique_ptr<Target>> lTargets;
   lTargets[TargetType::CPU_REF()] = CreateCpuRefTarget();
+
+/*
 #ifdef __aarch64__
   lTargets[TargetType::APEX()] = CreateApexTarget();
 #endif  
-
+*/
   auto lWorkspace = std::unique_ptr<Workspace>(new Workspace(std::move(lTargets)));
   
   {
@@ -1755,11 +1763,13 @@ static int MatMul_net_construction(int              aBatch,
       lGraph->AddNode(
              NodeFactory<MatMulConfig>::Create(
                 MatMulConfig {false, false, false, false, false, false,std::move(aActivation)}),
-              {lNetInputTensor.get(), lNetInputTensor.get()}, {outputTensor});
+                {lNetInputTensor.get(),lNetInputTensor.get()},{outputTensor});
+             // {lNetInputTensor.get(),lNetInputTensor.get()},{outputTensor});
      
       // Run APEX
 #ifdef __aarch64__
-      lStatus = lGraph->SetTargetHint(TargetType::APEX());
+      //lStatus = lGraph->SetTargetHint(TargetType::APEX());
+      lStatus = lGraph->SetTargetHint(TargetType::CPU_REF());
 #else
       lStatus = lGraph->SetTargetHint(TargetType::CPU_REF());
 #endif 
@@ -2285,8 +2295,8 @@ static int Shuffle_net_construction(int              aBatch,
       outputTensor->SetQuantParams({QuantInfo(0, 8.0)});
 
       lGraph->AddNode(
-             NodeFactory<DepthConvConfig>::Create(
-                DepthConvConfig{{akH, akW}, {aStrideH, aStrideW}, {1, 1}, std::move(aPadding), std::move(aActivation)}),
+             NodeFactory<ShuffleConfig>::Create(
+                ShuffleConfig{0,2}),
               {lNetInputTensor.get(), lWeightTensor.get(), lBiasTensor.get()}, {outputTensor});
      
       // Run APEX
@@ -2378,6 +2388,10 @@ end:
 
 
 /* depth wise 3x3 convolution */
+
+/*
+文档中有 grouped convolution ，但是并不是在库中并没有
+*/
 static int Groupedconv2d_net_construction(int              aBatch,
                                       int              akW,
                                       int              akH,
@@ -2640,7 +2654,7 @@ static int Squeeze_net_construction(int              aBatch,
 
       lGraph->AddNode(
              NodeFactory<SqueezeConfig>::Create(
-                SqueezeConfig{ {std::array<true, 4U> 0}}),
+                SqueezeConfig{ 0}),
               {lNetInputTensor.get(), lWeightTensor.get(), lBiasTensor.get()}, {outputTensor});
      
       // Run APEX
@@ -3083,7 +3097,7 @@ end:
 }
 
 
-# if 0
+# if 1
 /* depth wise 3x3 convolution */
 static int Slice_net_construction(int              aBatch,
                                       int              akW,
@@ -3170,7 +3184,7 @@ static int Slice_net_construction(int              aBatch,
 
       lGraph->AddNode(
              NodeFactory<SliceConfig>::Create(
-                SliceConfig{{akH, akW}, {aStrideH, aStrideW}, {1, 1}, std::move(aPadding), std::move(aActivation)}),
+                SliceConfig{{1,1,1,1}}),
               {lNetInputTensor.get(), lWeightTensor.get(), lBiasTensor.get()}, {outputTensor});
      
       // Run APEX
@@ -3459,17 +3473,18 @@ int conv_layer_test(int checkRef)
   /*  N          K         Input               Stride            IC              OC            group, pad,     activation,      checkResultWithCRef    */
   //1x1s1
   
- // lRetVal += MatMul_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
-  
-  
+
   //lRetVal += CrossCorr_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
  
-  
-  
-  
-  
-  
 
+  lRetVal += Slice_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
+
+  lRetVal += CrossCorr_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
+ 
+  lRetVal += Shuffle_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
+     
+  lRetVal += Squeeze_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
+     
   lRetVal += Sqrt_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
     
   lRetVal += NormSquareDiff_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
