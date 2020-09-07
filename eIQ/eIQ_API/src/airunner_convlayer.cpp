@@ -2108,8 +2108,8 @@ static int Sqrt_net_construction(int              aBatch,
       outputTensor->SetQuantParams({QuantInfo(0, 8.0)});
 
       lGraph->AddNode(
-             NodeFactory<DepthConvConfig>::Create(
-                DepthConvConfig{{akH, akW}, {aStrideH, aStrideW}, {1, 1}, std::move(aPadding), std::move(aActivation)}),
+             NodeFactory<SqrtConfig>::Create(
+                SqrtConfig{std::move(aActivation)}),
               {lNetInputTensor.get(), lWeightTensor.get(), lBiasTensor.get()}, {outputTensor});
      
       // Run APEX
@@ -2639,8 +2639,8 @@ static int Squeeze_net_construction(int              aBatch,
       outputTensor->SetQuantParams({QuantInfo(0, 8.0)});
 
       lGraph->AddNode(
-             NodeFactory<DepthConvConfig>::Create(
-                DepthConvConfig{{akH, akW}, {aStrideH, aStrideW}, {1, 1}, std::move(aPadding), std::move(aActivation)}),
+             NodeFactory<SqueezeConfig>::Create(
+                SqueezeConfig{ {std::array<true, 4U> 0}}),
               {lNetInputTensor.get(), lWeightTensor.get(), lBiasTensor.get()}, {outputTensor});
      
       // Run APEX
@@ -3083,7 +3083,7 @@ end:
 }
 
 
-
+# if 0
 /* depth wise 3x3 convolution */
 static int Slice_net_construction(int              aBatch,
                                       int              akW,
@@ -3169,8 +3169,8 @@ static int Slice_net_construction(int              aBatch,
       outputTensor->SetQuantParams({QuantInfo(0, 8.0)});
 
       lGraph->AddNode(
-             NodeFactory<DepthConvConfig>::Create(
-                DepthConvConfig{{akH, akW}, {aStrideH, aStrideW}, {1, 1}, std::move(aPadding), std::move(aActivation)}),
+             NodeFactory<SliceConfig>::Create(
+                SliceConfig{{akH, akW}, {aStrideH, aStrideW}, {1, 1}, std::move(aPadding), std::move(aActivation)}),
               {lNetInputTensor.get(), lWeightTensor.get(), lBiasTensor.get()}, {outputTensor});
      
       // Run APEX
@@ -3258,7 +3258,7 @@ end:
   return lStatus == Status_t::SUCCESS ? 0 : 1;
 }
 
-
+#endif 
 
 
 
@@ -3460,6 +3460,18 @@ int conv_layer_test(int checkRef)
   //1x1s1
   
  // lRetVal += MatMul_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
+  
+  
+  //lRetVal += CrossCorr_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
+ 
+  
+  
+  
+  
+  
+
+  lRetVal += Sqrt_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
+    
   lRetVal += NormSquareDiff_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
    
   lRetVal += Transpose_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
@@ -3475,9 +3487,7 @@ int conv_layer_test(int checkRef)
   lRetVal += depthconv_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
  
   lRetVal += deconv2d_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
- 
-  //lRetVal += CrossCorr_net_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
- 
+
   lRetVal += concat_node_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
  
   lRetVal += Resize_node_construction(10, 3, 3, 28, 28, 1, 1, 30, {PaddingScheme_t::SAME, 0, 0, 0, 0}, {ActivationFunction_t::NONE, 0.0, 0.0}, InterpolationType_t::NEAREST_NEIGHBOUR ,CoordinateTransformationMode_t::ALIGN_CORNERS,ResizeInputType_t::SIZE, checkRef); // DepthConv_kh3_kw3_sh1_sw1_ph1_pw1_g30_#out30_10_30_28_28
