@@ -431,14 +431,13 @@ std::vector<std::pair<uint32_t, float>> case_network_target_full(const std::stri
   }
 
   // Load first graph
-  std::string lOutputTensor = "CifarNet/logits/BiasAdd";
+  //std::string lOutputTensor = "CifarNet/logits/BiasAdd";
+  std::string lOutputTensor = "CifarNet/Predictions/Softmax";
   std::map<std::string, Tensor*> lInputTensors = {{"input", lApexNetInput}};
   std::map<std::string, Tensor*> lOutputTensors;
   lOutputTensors[lOutputTensor];
 
-  printf("line439 \n");
-
-  status = LoadNetFromTensorFlowV2(*net_mobile, aMnetGraph, lInputTensors, lOutputTensors, "catdogfull.log");
+  status = LoadNetFromTensorFlowV2(*net_mobile, aMnetGraph, lInputTensors, lOutputTensors, "cifarnet.log");
   if(Status_t::SUCCESS != status || lOutputTensors.empty())
   {
     std::cout << "Failed to load net" << std::endl;
@@ -498,7 +497,7 @@ std::vector<std::pair<uint32_t, float>> case_network_target_full(const std::stri
   lOutputTensors[lOutputTensor]->Invalidate();
 
 
-#if 0 // 结果暂不处理，仅仅是提取到目标参数即可
+#if 1 // 结果暂不处理，仅仅是提取到目标参数即可
 
   float result = *(lOutputTensors[lOutputTensor]->DataPtr<float>());
   float sigmoid = static_cast<float32_t>(1. / (1. + exp((result) * -1.)));
