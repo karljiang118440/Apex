@@ -558,6 +558,7 @@ int case_mobilenet_full(const std::string& aMnetGraph,
                         bool  isExtSoftmax,
                         bool  flipDisplay)
 {
-  auto results_full  = case_network_target_full(aMnetGraph, aImageFile, aSlimLabelsFile, "CPU",  isFixed, isExtSoftmax, flipDisplay);
+  auto results_full  = case_network_target_full(aMnetGraph, aImageFile, aSlimLabelsFile, "APEX",  isFixed, isExtSoftmax, flipDisplay);
+  //auto results_full  = case_network_target_full(aMnetGraph, aImageFile, aSlimLabelsFile, "CPU",  isFixed, isExtSoftmax, flipDisplay);
   return 0;
 }
