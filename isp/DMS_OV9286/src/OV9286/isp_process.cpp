@@ -83,7 +83,19 @@ static bool sStop = false; ///< to signal Ctrl+c from command line
 #define CAM_SAVE    save_file_from_frame
 
 
-#define video_saver 1
+#define VIDEO_SAVER 1
+
+
+#if VIDEO_SAVER
+
+#include "opencv2/core.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/videio.hpp"
+#include <iostream>
+
+#endif 
+
 
 #ifdef CAM_SAVE
 #define CAM_LINES			(720)
@@ -204,20 +216,19 @@ void ISP_CALL()
 
 
 
-  #ifdef video_saver
+  #ifdef VIDEO_SAVER
 
     cv::VideoWriter *video = NULL;
 
 
-    video = cv::CreateVideoWriter("camera.avi",CV_FOURCC('X','V','I','D'),25,cv::size(720,1280));
+    video = cv::CreateVideoWriter("camera.avi",CV_FOURCC('X','V','I','D'),25,cv:Size(720,1280));
 
     if(video){
       std::cout << " videowrite has created." <<std::endl;
     }
 
 
-    int n = cv::WriteFrame(video,cv::UMat(gFrameIsp.mUMat));
-    std::cout <<  n  <<std::endl;
+   video << (cv::Mat)lFrame.mUMat;
     
 
   #endif 
