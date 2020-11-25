@@ -2,6 +2,8 @@
 #include "face_engine.h"
 
 
+#define VIDEO_MODEL 1
+
 int TestLandmark(int argc, char* argv[]) {
 	cv::Mat img_src = cv::imread("./images/4.jpg");
 	const char* root_path = "./models";
@@ -29,23 +31,56 @@ int TestLandmark(int argc, char* argv[]) {
 	cv::imshow("result", img_src);
 	cv::waitKey(0);
 
+
+
 	return 0;
 
 }
 
 int TestRecognize(int argc, char* argv[]) {
-	cv::Mat img_src = cv::imread("./images/4.jpg");
+
+	#if VIDEO_MODEL
+
+	/*
+	1) add video detect -by karl.jiang 2020.11.25
+
+	*/
+
+
+
+
+
+	cv::VideoCapture mCapture;
+	mCapture.open("./images/call.mp4");
+
+	if(!mCapture.isOpened()){
+		printf("cannot open video file: \n ");
+		return -1;
+	}
+
+	while(1){ // 对视频进行检测
+
+	cv::Mat frame;
+	mCapture >> frame;
+
+	cv::Mat img_src = cv::imread("./images/karl2.jpg");
 	const char* root_path = "./models";
 
+
+
 	double start = static_cast<double>(cv::getTickCount());
+
 	FaceEngine face_engine;
 	face_engine.LoadModel(root_path);
 	std::vector<FaceInfo> faces;
-	face_engine.Detect(img_src, &faces);
+	std::vector<FaceInfo> faces_video;
 
+	face_engine.Detect(img_src, &faces);
+	face_engine.Detect(frame, &faces_video);
 
 	cv::Mat face1 = img_src(faces[0].face_).clone();
-	cv::Mat face2 = img_src(faces[1].face_).clone();
+	cv::Mat face2 = img_src(faces_video[0].face_).clone();
+
 	std::vector<float> feature1, feature2;
 	face_engine.ExtractFeature(face1, &feature1);
 	face_engine.ExtractFeature(face2, &feature2);
@@ -59,10 +94,19 @@ int TestRecognize(int argc, char* argv[]) {
 		cv::Rect face = faces.at(i).face_;
 		cv::rectangle(img_src, face, cv::Scalar(0, 255, 0), 2);		
 	}
-	cv::imwrite("./images/face1.jpg", face1);
-	cv::imwrite("./images/face2.jpg", face2);
-	cv::imwrite("result1.jpg", img_src);
+	// cv::imwrite("./images/face1.jpg", face1);
+	// cv::imwrite("./images/face2.jpg", face2);
+	// cv::imwrite("result1.jpg", img_src);
 	std::cout << "similarity is: " << sim << std::endl;
+
+
+
+
+
+	}
+
+
+	#endif 
 
 	return 0;
 
