@@ -46,6 +46,33 @@
 
 using namespace std;
 
+
+
+/*
+
+add face recoginze
+
+
+*/ 
+extern AppContext s_lContext;
+
+
+//  add facerecog declear
+
+#include "opencv2/opencv.hpp"
+#include "./FaceRecog/face_engine.h"
+
+int TestRecognize(int argc, char* argv[]); 
+int TestRecognize_camera(cv::Mat frame_input);
+
+//********************************************
+
+
+
+
+
+
+
 //#define SAVE_VIDEO
 
 #if DEBUG_SEG_FAULT
@@ -110,9 +137,7 @@ int main(int argc, char** argv)
 
 #if (DEMO_MODE == VIDEO_MODE)
     cv::VideoCapture mCapture; /* open video */
-    //mCapture.open("./data/airunner/dms/call.avi");
-    mCapture.open("./data/airunner/dms/call_red.avi");
-   // mCapture.open("./data/airunner/dms/test_video.avi");
+    mCapture.open("./data/airunner/dms/output.mp4");
     if(!mCapture.isOpened()) // if not success, exit program
     {
       printf("Cannot open the video file: \n");
@@ -136,9 +161,7 @@ int main(int argc, char** argv)
     myRender.Init(&params);
 
 	DMS myDMS;
-//	myDMS.Init(FRAME_DMS_RGB, FRAME_DMS_GS, IMG_WIDTH, IMG_HEIGHT);
-    myDMS.Init(1, 0, IMG_WIDTH, IMG_HEIGHT);  // add by frank
-
+	myDMS.Init(FRAME_DMS_RGB, FRAME_DMS_GS, IMG_WIDTH, IMG_HEIGHT);
 
 #ifdef SAVE_VIDEO
     cv::VideoWriter mVideoWriter;
@@ -153,44 +176,46 @@ int main(int argc, char** argv)
     double displayFps = 0.0f;
 
     /* Video streams */
-    vsdk::UMat frameUMat[2];
-
-    vsdk::UMat frameUMatInput[2];
+    vsdk::UMat frameUMat[FRAME_CHANNEL];
 
     /* Quit signal */    
     volatile sig_atomic_t quit = 0;
 
     int counter = 0;
 
+
+    /*
+    facerecognize 
+
+    */
+
+    int counter1 = 0;
+
+    //****************************
+
+
+
+
+
     /* Processing loop */
     while (quit != 1) 
     {
         quit = KeyScan();        
 #if (DEMO_MODE == CAMERA_MODE)    
-//        ImageGrabberPop(frameUMat);
-        ImageGrabberPop(frameUMatInput);
-       // cv::imwrite("cvframe.jpg",(cv::Mat)frameUMat[FRAME_DMS_RGB]);
+        ImageGrabberPop(frameUMat);
 
 
 
-    #if 0  // raw opencv cvt ---karl -2020.11.30
-
-        cv::Mat video_frame_frank;
-        cv::Mat video_frame_gray_frank;
-
-        video_frame_frank = frameUMatInput[0].getMat (vsdk::ACCESS_RW | OAL_USAGE_CACHED);
-        cv::cvtColor(video_frame_frank, video_frame_gray_frank, cv::COLOR_RGB2GRAY);
-        frameUMat[1] = frameUMatInput[0];
-
-        //cv::imwrite("video_frame.jpg",video_frame);
-        //cv::imwrite("video_frame_gray.jpg",video_frame_gray);
-        frameUMat[0] = video_frame_gray_frank.getUMat(cv::ACCESS_READ);
-
-
-    #endif 
 
 
 
+/*face recognize 
+
+1. vsdk::mat - > cv::mat
+
+2. add log 
+
+*/
 
     #if 1 // add wpi_logo  by karl 
 
@@ -207,46 +232,35 @@ int main(int argc, char** argv)
         cv::Mat video_frame_frank;
         cv::Mat video_frame_gray_frank;
 
-        video_frame_frank = frameUMatInput[0].getMat (vsdk::ACCESS_RW | OAL_USAGE_CACHED);
-
+        video_frame_frank = frameUMat[0].getMat (vsdk::ACCESS_RW | OAL_USAGE_CACHED);
 
         cv::cvtColor(video_frame_frank, video_frame_gray_frank, cv::COLOR_RGB2GRAY);
-        frameUMat[1] = frameUMatInput[0];
 
 
 	  //------add wpi logo------
 	 // cv::Mat imageROI = video_frame_frank(cv::Rect(video_frame_frank.cols - logo.cols, video_frame_frank.rows - logo.rows, logo.cols, logo.rows)); 
 
-	  cv::Mat imageROI = video_frame_frank(cv::Rect(video_frame_frank.cols - logo.cols, video_frame_frank.rows - logo.rows -600, logo.cols, logo.rows)); 
+	    cv::Mat imageROI = video_frame_frank(cv::Rect(video_frame_frank.cols - logo.cols, video_frame_frank.rows - logo.rows -600, logo.cols, logo.rows)); 
 
 
-	  cv::addWeighted(imageROI, 0.2, logo, 0.8, 0.0, imageROI);
-	  //-----end add wpi logo------
+	    cv::addWeighted(imageROI, 0.2, logo, 0.8, 0.0, imageROI);
 
-        //cv::imwrite("video_frame.jpg",video_frame);
+	    //-----end add wpi logo------
+
+        cv::imwrite("video_frame_frank.jpg",video_frame_frank);
         //cv::imwrite("video_frame_gray.jpg",video_frame_gray);
-        frameUMat[0] = video_frame_gray_frank.getUMat(cv::ACCESS_READ);
-
-
-
-
-    #endif 
-
-
-
-
-
-    # if 1 // add face recogize by karl -2020.12.02
-
-
-
-    
-
-
-
+        //frameUMat[0] = video_frame_gray_frank.getUMat(cv::ACCESS_READ);
 
 
     #endif 
+
+
+
+
+
+
+
+
 
 
 
@@ -263,10 +277,6 @@ int main(int argc, char** argv)
         }
         frameUMat[FRAME_DMS_RGB] = video_frame.getUMat(cv::ACCESS_READ);
         cv::cvtColor(video_frame, video_frame_gray, cv::COLOR_RGB2GRAY);
-
-        //cv::imwrite("video_frame.jpg",video_frame);
-        //cv::imwrite("video_frame_gray.jpg",video_frame_gray);
-
         frameUMat[FRAME_DMS_GS] = video_frame_gray.getUMat(cv::ACCESS_READ);
        
 #endif //#if (DEMO_MODE == VIDEO_MODE) 
@@ -277,14 +287,10 @@ int main(int argc, char** argv)
         mVideoWriter.write(frameRGB);
 #else
         double dmsAlgoStart = FSL_Ticks();
-
         myDMS.Run(frameUMat, quit);
-
-
         double dmsAlgoEnd = FSL_Ticks();
 
         myRender.Run(frameUMat, myDMS);
-
         myDisplay.Run();
         myDMS.Sync();
 
@@ -300,11 +306,28 @@ int main(int argc, char** argv)
         }
         sprintf(myRender.fpsInfo, "Algo FPS: %.1f", algoFps);
 
+
+
+
+
+        counter1 ++;
+        if(counter1 == 100)
+        {
+          //TestRecognize(argc, argv);
+          TestRecognize_camera(video_frame_frank);
+          //counter1 = 0;
+
+
+        }
+
+        printf("counter1 = %d \n",counter1);
+
+
+
 #endif  //#ifdef SAVE_VIDEO 
 
 #if (DEMO_MODE == CAMERA_MODE)
         ImageGrabberPush();
-
 #endif //#if (DEMO_MODE == CAMERA_MODE)
     }
 
@@ -325,4 +348,95 @@ int main(int argc, char** argv)
     myDMS.Quit();
 
     return 0;
+}
+
+
+
+
+
+int TestRecognize(int argc, char* argv[]) {
+	// cv::Mat img_src = cv::imread("./images/4.jpg");
+	const char* root_path = "./data/airunner/FaceRecog/models";
+
+	double start = static_cast<double>(cv::getTickCount());
+	FaceEngine face_engine;
+	face_engine.LoadModel(root_path);
+	std::vector<FaceInfo> faces;
+	// face_engine.Detect(img_src, &faces);
+
+
+	cv::Mat face1 = cv::imread("./data/airunner/FaceRecog/images/karl.jpg");
+	//cv::Mat face2 = cv::imread("../images/stark.png");
+	cv::Mat face2 = cv::imread("./data/airunner/FaceRecog/images/karl2.jpg");
+
+	std::vector<float> feature1, feature2;
+	face_engine.ExtractFeature(face1, &feature1);
+	face_engine.ExtractFeature(face2, &feature2);
+	float sim = CalculSimilarity(feature1, feature2);
+
+	double end = static_cast<double>(cv::getTickCount());
+	double time_cost = (end - start) / cv::getTickFrequency() * 1000;
+	std::cout << "time cost: " << time_cost << "ms" << std::endl;
+
+	// for (int i = 0; i < static_cast<int>(faces.size()); ++i) {
+	// 	cv::Rect face = faces.at(i).face_;
+	// 	cv::rectangle(img_src, face, cv::Scalar(0, 255, 0), 2);		
+	// }
+
+	std::cout << "similarity is: " << sim << std::endl;
+
+    printf("face recognize finised \n");
+
+    // add label to frames ,threshold is 0.75
+
+    // if(sim >= 0.75)
+    
+    //     return 1;
+
+
+}
+
+
+
+int TestRecognize_camera(cv::Mat frame_input) {
+	// cv::Mat img_src = cv::imread("./images/4.jpg");
+	const char* root_path = "./data/airunner/FaceRecog/models";
+
+	double start = static_cast<double>(cv::getTickCount());
+	FaceEngine face_engine;
+	face_engine.LoadModel(root_path);
+	std::vector<FaceInfo> faces;
+	face_engine.Detect(frame_input, &faces);
+
+
+	cv::Mat face1 = cv::imread("./data/airunner/FaceRecog/images/karl_gray.jpg");
+	//cv::Mat face2 = cv::imread("../images/stark.png");
+	// cv::Mat face2 = cv::imread("./data/airunner/FaceRecog/images/karl2.jpg");
+    cv::Mat face2 = frame_input(faces[0].face_).clone();
+
+	std::vector<float> feature1, feature2;
+	face_engine.ExtractFeature(face1, &feature1);
+	face_engine.ExtractFeature(face2, &feature2);
+	float sim = CalculSimilarity(feature1, feature2);
+
+	double end = static_cast<double>(cv::getTickCount());
+	double time_cost = (end - start) / cv::getTickFrequency() * 1000;
+	std::cout << "time cost: " << time_cost << "ms" << std::endl;
+
+	// for (int i = 0; i < static_cast<int>(faces.size()); ++i) {
+	// 	cv::Rect face = faces.at(i).face_;
+	// 	cv::rectangle(img_src, face, cv::Scalar(0, 255, 0), 2);		
+	// }
+
+	std::cout << "similarity is: " << sim << std::endl;
+
+    printf("face recognize finised \n");
+
+    // add label to frames ,threshold is 0.75
+
+    // if(sim >= 0.75)
+    
+    //     return 1;
+
+
 }
