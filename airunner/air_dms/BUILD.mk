@@ -21,9 +21,9 @@
 #
 ##############################################################################
 
- #APP_FUNC ?= DMS_AR0144_MAX9286_MIPI
- APP_FUNC ?= DMS_OV9284_MAX9286_MIPI
-#APP_FUNC ?= DMS_VIDEO_INPUT
+# APP_FUNC ?= DMS_AR0144_MAX9286_MIPI
+APP_FUNC ?= DMS_OV9284_MAX9286_MIPI
+# APP_FUNC ?= DMS_VIDEO_INPUT
 
 SDK_ROOT := $(call path_relative_to,$(CURDIR),$(CURR_SDK_ROOT))
 
@@ -43,7 +43,7 @@ endif
 ifeq ($(APP_FUNC),DMS_OV9284_MAX9286_MIPI)
     APP_VERSION = 1
     SEQ_MODE  = dynamic
-    ISP_GRAPH = ov9284_max9286_mipi
+    ISP_GRAPH = ov9284_ub964_mipi
     ARM_APP   = dms_ov9284_max9286_mipi
 endif
 ifeq ($(APP_FUNC),DMS_VIDEO_INPUT)
@@ -134,10 +134,6 @@ ARM_APP_SRCS +=                                                                 
 
 
 # **************************FACE RECOGNIZE *******
-
-
-
-
 
 
 
@@ -239,7 +235,6 @@ endif
 
 
 
-
 # FACE RECOGNIZE *******
 
 
@@ -254,9 +249,16 @@ ARM_INCS +=                                                                  \
     -I../src/FaceRecog/detect				                                        \
     -I../src/FaceRecog/landmark				                                    \
     -I../src/FaceRecog/recognize				                                                \
-    -I../ssrc/FaceRecogrc/recognize/mobilefacenet					                    \
+    -I../src/FaceRecogrc/recognize/mobilefacenet					                    \
     -I$(SDK_ROOT)/3rdparty/ncnn/include/ncnn   \
 #************************* FACE RECOGNIZE
+
+
+
+
+
+
+
 
 
 
@@ -295,7 +297,8 @@ ARM_APP_LIBS +=                                                                 
     ../src/DMS/FaceDetectorDlib/$(ODIR)/libFaceDetectorDlib.a 			            \
     ../src/DMS/AIRunnerClassifier/$(ODIR)/libAIRunnerClassifier.a 			        \
     ../src/DMS/MatchedFilterDetector/$(ODIR)/libMatchedFilterDetector.a 			\
-    ../src/DMS/$(ODIR)/libDMS.a
+    ../src/DMS/$(ODIR)/libDMS.a        \
+    $(SDK_ROOT)/3rdparty/ncnn/lib/libncnn.a      \
 
 #AIRunner libs
 ARM_APP_LIBS +=                                                                          \
@@ -306,9 +309,7 @@ ARM_APP_LIBS +=                                                                 
     $(SDK_ROOT)/libs/dnn/airunner/nodes/cpu_opt/$(ODIR)/airunner_cpu_opt_nodes.a         \
     $(SDK_ROOT)/libs/dnn/airunner/nodes/apu2/$(ODIR)/airunner_apu2_nodes.a               \
     $(SDK_ROOT)/libs/dnn/airunner/preprocessing/$(ODIR)/airunner_preprocessing.a         \
-    $(SDK_ROOT)/libs/dnn/airunner/postprocessing/$(ODIR)/airunner_postprocessing.a      \
-    $(SDK_ROOT)/3rdparty/ncnn/lib/libncnn.a      \
-     
+    $(SDK_ROOT)/libs/dnn/airunner/postprocessing/$(ODIR)/airunner_postprocessing.a
 
 #ImageGrabber source files
 ifneq (,$(filter $(APP_FUNC),DMS_AR0144_MAX9286_MIPI DMS_OV9284_MAX9286_MIPI))
